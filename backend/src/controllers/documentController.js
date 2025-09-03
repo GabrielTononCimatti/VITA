@@ -1,0 +1,245 @@
+import {db, bucket, firestore} from '../config/firebaseConfig.js';
+import {retrieveProject,} from "../models/projectModel.js";
+import {retrieveUserQuery} from "../models/userModel.js";
+import {saveNotification} from "../models/notificationModel.js";
+
+export const getAllDocuments = async (req, res) =>
+{
+    if(!['A'].includes(req.currentUser.userType))
+        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
+
+    let documents
+    try
+    {
+        documents = await retrieveDocumentQuery(null);
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+
+    if(documents.length === 0)
+    {
+        console.log("\n\n"+"Nenhum documento encontrado"+"\n\n");
+        return res.status(400).send({message:"Nenhum documento encontrado".message});
+    }
+
+    return res.status(200).send(documents);
+};
+
+
+export const getDocumentByStage = async (req, res) =>
+{
+    if(!['A', 'C', 'F'].includes(req.currentUser.userType))
+        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
+
+    let query ={
+        fieldName: "stageID",
+        condition: "==",
+        fieldValue: "projects/" + req.params.id+"/stages/"+req.params.stageID
+    }
+
+    let project
+    try
+    {
+        project = await retrieveProject(req.params.projectID);
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+
+    if(!project)
+    {
+        console.log("\n\n"+"Nenhum projeto encontrado"+"\n\n");
+        return res.status(400).send({message:"Nenhum projeto encontrado".message});
+    }
+
+    if(req.currentUser.userType === 'F' && project.employeeID !== "users/"+req.currentUser.id)
+        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
+
+    if(req.currentUser.userType === 'C' && project.clientID !== "persons/" + req.currentPerson.id)
+        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
+
+
+    let document
+    try
+    {
+        document = await retrieveDocumentQuery(query);
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+    if(document.length === 0)
+    {
+        console.log("\n\n"+"Nenhum documento encontrado"+"\n\n");
+        return res.status(400).send({message:"Nenhum documento encontrado".message});
+    }
+
+
+    return res.status(200).send(document);
+}
+
+
+export const getDocumentById = async (req, res) =>
+{
+    if(!['A', 'C', 'F'].includes(req.currentUser.userType))
+        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
+
+    let document;
+
+    try
+    {
+        document = await retrieveDocument(req.params.id);
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+
+    if(!document)
+    {
+        console.log("\n\n"+"Nenhum documento encontrado"+"\n\n");
+        return res.status(400).send({message:"Nenhum documento encontrado".message});
+    }
+
+    return res.status(200).send(document);
+}
+
+export const postDocument = async (req, res) =>
+{
+    try
+    {
+        if (!req.file) return res.status(400).send("Nenhum arquivo enviado.");
+
+        const file = bucket.file(Date.now() + "-" + req.file.originalname);
+
+        // Upload to Firebase Storage
+        await file.save(req.file.buffer, {
+            metadata: { contentType: req.file.mimetype }
+        });
+
+        // Make file public (optional)
+        await file.makePublic();
+        const publicUrl = `https://storage.googleapis.com/${bucket.name}/${file.name}`;
+
+        // Save reference in Firestore
+
+        let document = JSON.parse(req.body.data);
+        if(!document.description)
+            document.description = null;
+        document.createdAt = firestore.FieldValue.serverTimestamp();
+        document.fileSize = req.file.size;
+        document.name = req.file.originalname;
+        document.url = publicUrl;
+        document.userID = req.currentUser.id;
+
+        validateDocument(document, true);
+        const docRef = await db.collection("documents").add(document);
+
+
+        let project;
+        try
+        {
+            project = await retrieveProject(document.stageID.split("/")[1]);
+        }
+        catch(error)
+        {
+            console.log("\n\n"+error+"\n\n");
+            return res.status(400).send({message:error.message});
+        }
+
+        if(req.currentUser.userType === 'F' || req.currentUser.userType === 'A')
+        {
+            let clientUser;
+            try
+            {
+                let query = {fieldName: "personID", condition: "==", fieldValue: project.clientID};
+                clientUser = await retrieveUserQuery(query)[0];
+            }
+            catch (error)
+            {}
+
+            if (clientUser)
+            {
+                let notification =
+                    {
+                        createdAt: firestore.FieldValue.serverTimestamp(),
+                        message: "Um documento foi adicionado ao projeto " + project.name,
+                        projectID: "projects/" + project.id,
+                        read: false,
+                        receiverID: "users/" + clientUser.id,
+                        senderID: "users/" + req.currentUser.id,
+                        stageID: "stages/" + document.stageID.split("/")[3],
+                        subject: "Adição de documento"
+                    }
+
+                saveNotification(notification);
+            }
+        }
+        if(req.currentUser.userType === 'C')
+        {
+            let notification =
+                {
+                    createdAt: firestore.FieldValue.serverTimestamp(),
+                    message: "Um documento foi adicionado ao projeto " + project.name,
+                    projectID: "projects/" + project.id,
+                    read: false,
+                    receiverID: project.employeeID,
+                    senderID: "users/" + req.currentUser.id,
+                    stageID: "stages/" + document.stageID.split("/")[3],
+                    subject: "Adição de documento"
+                }
+
+            saveNotification(notification);
+        }
+
+
+        return res.status(201).send({message: "Projeto criado com sucesso"});
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+};
+
+
+
+export const deleteDocumentById = async (req, res) =>
+{
+    if(!['A', 'C', 'F'].includes(req.currentUser.userType))
+        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
+
+    let document;
+
+    try
+    {
+        document = await retrieveDocument(req.params.id);
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+
+    if(document.userID !== "users/"+req.currentUser.id && req.currentUser.userType !== "F" && !req.currentUser.userType !== "A")
+        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
+
+    try
+    {
+        await deleteDocument(req.params.id);
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+
+    return res.status(200).send({message: "Documento removido com sucesso"});
+};
