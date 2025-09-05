@@ -1,13 +1,13 @@
 import {db} from "../config/firebaseConfig.js";
 import {docToObject, firestoreToISO, snapshotToArray, checkValidID, checkValidDate} from "../utils/dbUtils.js";
-import {editStage, retrieveStageQuery, saveStage} from "./stageModel.js";
+import {deleteStage, editStage, retrieveStageQuery, saveStage} from "./stageModel.js";
 
 
 export const validateProject = (project, allFieldsRequired) =>
 {
     if(!project)
         throw new Error("Dados não recebidos. Objeto 'project' vazio");
-    
+
     if(allFieldsRequired)
     {
         if(project.clientID == null)
@@ -114,7 +114,7 @@ export const saveProject = async (project) =>
 
     for(let i=0; i<stages.length; i++)
     {
-        let id = await saveStage(projectRef, stages[i], batch);
+        let id = saveStage(projectRef, stages[i], batch);
         stages[i]={id: id, order: stages[i].order};
     }
     stages.sort((a, b) => a.order - b.order);
@@ -128,13 +128,15 @@ export const editProject = async (id, project) =>
     if(!project || !id)
         return null;
     let {stages, ...projectData} = project;
-    validateProject(projectData, false);
 
     const batch = db.batch();
     let projectRef = db.collection('projects').doc(id);
 
-    if(projectData)
+    if(projectData && Object.keys(projectData).length > 0)
+    {
+        validateProject(projectData, false);
         batch.update(projectRef, projectData);
+    }
 
     if(!stages || !Array.isArray(stages))
     {
@@ -149,7 +151,7 @@ export const editProject = async (id, project) =>
         {
             let stageID = stage.id;
             delete stage.id;
-            await editStage(projectRef, stageID, stage, batch);
+            editStage(projectRef, stageID, stage, batch);
         }
         else
         {
@@ -158,7 +160,7 @@ export const editProject = async (id, project) =>
         }
     }
 
-
+    await batch.commit();
     return {id: projectRef.id, newStages};
 }
 
@@ -167,8 +169,16 @@ export const deleteProject = async (id) =>
 {
     if(!id)
         return null;
+    const batch = db.batch();
+    let projectRef = db.collection("projects").doc(id);
+    batch.delete(projectRef);
+    let oldProject = await retrieveProject(id);
 
-    await db.collection("projects").doc(id).delete();
+    for(let i=0; i<oldProject.stages.length; i++)
+    {
+        deleteStage(projectRef, oldProject.stages[i].id, batch);
+    }
 
+    await batch.commit();
     return id;
 }

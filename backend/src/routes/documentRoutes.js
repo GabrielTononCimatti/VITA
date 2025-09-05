@@ -1,8 +1,10 @@
 import express from 'express';
-import {getAllDocuments, getDocumentByStage, getDocumentById, postDocument, deleteDocumentById} from '../controllers/documentController.js';
+import {
+    getDocumentById, postDocument, deleteDocumentById,
+    getAllDocuments, getDocumentByStage, postLink
+} from '../controllers/documentController.js';
 import {authenticate} from "../middleware/authenticationMiddleware.js";
 import multer from 'multer';
-
 const upload = multer({ storage: multer.memoryStorage() });
 const router = express.Router();
 
@@ -12,7 +14,8 @@ router.get('/project/:projectID/stage/:stageID', authenticate, getDocumentByStag
 router.get('/:id', authenticate, getDocumentById);
 
 //POST
-router.post('/', authenticate, upload.single("file"), postDocument);
+router.post('/', authenticate, upload.single("file"),postDocument);
+router.post('/link', authenticate, postLink);
 
 //DELETE
 router.delete('/:id', authenticate, deleteDocumentById);

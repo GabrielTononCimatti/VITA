@@ -1,3 +1,4 @@
+
 import {
     deletePerson,
     editPerson,
@@ -84,11 +85,11 @@ export const postPerson = async (req, res) =>
     }
 
     let user =
-    {
-        personID: "persons/"+personRefID,
-        userType: personToUserType(person.personType),
-        active: false
-    }
+        {
+            personID: "persons/"+personRefID,
+            userType: personToUserType(person.personType),
+            active: false
+        }
 
     let preUserID;
     try

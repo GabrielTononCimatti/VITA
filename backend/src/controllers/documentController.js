@@ -2,6 +2,7 @@ import {db, bucket, firestore} from '../config/firebaseConfig.js';
 import {retrieveProject,} from "../models/projectModel.js";
 import {retrieveUserQuery} from "../models/userModel.js";
 import {saveNotification} from "../models/notificationModel.js";
+import {retrieveDocumentQuery, validateDocument, validateLink} from "../models/documentModel.js";
 
 export const getAllDocuments = async (req, res) =>
 {
@@ -137,7 +138,7 @@ export const postDocument = async (req, res) =>
         document.fileSize = req.file.size;
         document.name = req.file.originalname;
         document.url = publicUrl;
-        document.userID = req.currentUser.id;
+        document.userID = "users/"+req.currentUser.id;
 
         validateDocument(document, true);
         const docRef = await db.collection("documents").add(document);
@@ -159,13 +160,13 @@ export const postDocument = async (req, res) =>
             let clientUser;
             try
             {
-                let query = {fieldName: "personID", condition: "==", fieldValue: project.clientID};
+                let query = {fieldName: "personID", condition: "==", fieldValue: "persons/"+project.clientID};
                 clientUser = await retrieveUserQuery(query)[0];
             }
             catch (error)
             {}
 
-            if (clientUser)
+            if (clientUser && clientUser.active)
             {
                 let notification =
                     {
@@ -200,7 +201,7 @@ export const postDocument = async (req, res) =>
         }
 
 
-        return res.status(201).send({message: "Projeto criado com sucesso"});
+        return res.status(201).send({message: "Documento criado com sucesso"});
     }
     catch(error)
     {
@@ -208,6 +209,89 @@ export const postDocument = async (req, res) =>
         return res.status(400).send({message:error.message});
     }
 };
+
+export const postLink = async (req, res) =>
+{
+    try
+    {
+        let document = req.body;
+        if(!document.description)
+            document.description = null;
+        if(!document.name)
+            document.name = null;
+        document.createdAt = firestore.FieldValue.serverTimestamp();
+        document.userID = "users/"+req.currentUser.id;
+
+        validateLink(document, true);
+        const docRef = await db.collection("documents").add(document);
+
+
+        let project;
+        try
+        {
+            project = await retrieveProject(document.stageID.split("/")[1]);
+        }
+        catch(error)
+        {
+            console.log("\n\n"+error+"\n\n");
+            return res.status(400).send({message:error.message});
+        }
+
+        if(req.currentUser.userType === 'F' || req.currentUser.userType === 'A')
+        {
+            let clientUser;
+            try
+            {
+                let query = {fieldName: "personID", condition: "==", fieldValue: "persons/"+project.clientID};
+                clientUser = await retrieveUserQuery(query)[0];
+            }
+            catch (error)
+            {}
+
+            if (clientUser && clientUser.active)
+            {
+                let notification =
+                    {
+                        createdAt: firestore.FieldValue.serverTimestamp(),
+                        message: "Um documento foi adicionado ao projeto " + project.name,
+                        projectID: "projects/" + project.id,
+                        read: false,
+                        receiverID: "users/" + clientUser.id,
+                        senderID: "users/" + req.currentUser.id,
+                        stageID: "stages/" + document.stageID.split("/")[3],
+                        subject: "Adição de documento"
+                    }
+
+                saveNotification(notification);
+            }
+        }
+        if(req.currentUser.userType === 'C')
+        {
+            let notification =
+                {
+                    createdAt: firestore.FieldValue.serverTimestamp(),
+                    message: "Um documento foi adicionado ao projeto " + project.name,
+                    projectID: "projects/" + project.id,
+                    read: false,
+                    receiverID: project.employeeID,
+                    senderID: "users/" + req.currentUser.id,
+                    stageID: "stages/" + document.stageID.split("/")[3],
+                    subject: "Adição de documento"
+                }
+
+            saveNotification(notification);
+        }
+
+
+        return res.status(201).send({message: "Documento criado com sucesso"});
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+
+}
 
 
 

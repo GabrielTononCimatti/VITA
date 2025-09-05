@@ -8,6 +8,39 @@ import {
     snapshotToArray
 } from "../utils/dbUtils.js";
 
+export const validateLink = (document, allFieldsRequired) =>
+{
+    if(!document)
+        throw new Error("Dados não recebidos. Objeto 'document' vazio");
+
+    if(allFieldsRequired)
+    {
+        if(document.createdAt == null)
+            throw new Error("'createdAt' não pode ser null ou undefined");
+        if(document.stageID == null)
+            throw new Error("'stageID' não pode ser null ou undefined");
+        if(document.url == null)
+            throw new Error("'url' não pode ser null ou undefined");
+        if(document.userID == null)
+            throw new Error("'userID' não pode ser null ou undefined");
+    }
+
+    checkValidDate("createdAt", document.createdAt);
+
+    if(document.description && typeof document.description !== "string")
+        throw new Error("'description' deve ser string");
+
+    if(document.name && typeof document.name !== "string")
+        throw new Error("'name' deve ser string");
+
+    checkValidStageID(document.stageID);
+
+    if(document.url && typeof document.url !== "string")
+        throw new Error("'url' deve ser string");
+
+    checkValidID("userID", document.userID, "users");
+}
+
 
 export const validateDocument = (document, allFieldsRequired) =>
 {

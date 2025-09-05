@@ -83,12 +83,12 @@ export const register = async (req, res) =>
     }
 
     let user =
-    {
-        email:  email,
-        firebaseUID: userRecord.uid,
-        active: true,
-        activated: firestore.FieldValue.serverTimestamp()
-    }
+        {
+            email:  email,
+            firebaseUID: userRecord.uid,
+            active: true,
+            activatedAt: firestore.FieldValue.serverTimestamp()
+        }
 
     try
     {

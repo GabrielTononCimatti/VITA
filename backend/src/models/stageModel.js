@@ -93,7 +93,7 @@ export const retrieveStageQuery = async (projectRef, query) =>
 }
 
 
-export const saveStage = async (projectRef, stage, batch) =>
+export const saveStage = (projectRef, stage, batch) =>
 {
     if(!projectRef || !stage || !batch)
         return null;
@@ -106,7 +106,7 @@ export const saveStage = async (projectRef, stage, batch) =>
 }
 
 
-export const editStage = async (projectRef, id, stage, batch) =>
+export const editStage = (projectRef, id, stage, batch) =>
 {
     if(!projectRef || !id || !stage || !batch)
         return null;
@@ -119,13 +119,13 @@ export const editStage = async (projectRef, id, stage, batch) =>
 }
 
 
-export const deleteStage = async (projectID, stageID) =>
+export const deleteStage = (projectRef, id, batch) =>
 {
-    if(!projectID || !stageID)
+    if(!projectRef || !id || !batch)
         return null;
 
-    let projectRef = db.collection('projects').doc(projectID);
-    await projectRef.collection('stages').doc(stageID).delete();
+    let stageRef = projectRef.collection('stages').doc(id);
+    batch.delete(stageRef) ;
 
-    return stageID;
+    return id;
 }

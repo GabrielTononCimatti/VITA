@@ -1,4 +1,4 @@
-import {firestore} from '../config/firebaseConfig.js';
+import {db, firestore} from '../config/firebaseConfig.js';
 import {
     editProject,
     retrieveProject,
@@ -137,26 +137,26 @@ export const postProject = async (req, res) =>
     let clientUser;
     try
     {
-        let query = {fieldName: "personID", condition: "==", fieldValue: project.clientID};
+        let query = {fieldName: "personID", condition: "==", fieldValue: "persons/"+project.clientID};
         clientUser = (await retrieveUserQuery(query))[0];
     }
     catch(error)
     {}
 
 
-    if(clientUser.active)
+    if(clientUser && clientUser.active)
     {
         let notification =
-        {
-            createdAt: firestore.FieldValue.serverTimestamp(),
-            message: "Você foi adicionado ao projeto " + project.name,
-            projectID: "projects/"+savedProject.id,
-            read: false,
-            receiverID: "users/"+clientUser.id,
-            senderID: "users/"+req.currentUser.id,
-            stageID: null,
-            subject: "Criação de projeto"
-        }
+            {
+                createdAt: firestore.FieldValue.serverTimestamp(),
+                message: "Você foi adicionado ao projeto " + project.name,
+                projectID: "projects/"+savedProject.id,
+                read: false,
+                receiverID: "users/"+clientUser.id,
+                senderID: "users/"+req.currentUser.id,
+                stageID: null,
+                subject: "Criação de projeto"
+            }
 
         saveNotification(notification);
     }
@@ -202,13 +202,13 @@ export const putProject = async (req, res) =>
     let clientUser;
     try
     {
-        let query = {fieldName: "personID", condition: "==", fieldValue: project.clientID}
+        let query = {fieldName: "personID", condition: "==", fieldValue: "persons/"+ Oldproject.clientID}
         clientUser = await retrieveUserQuery(query)[0];
     }
     catch(error)
     {}
 
-    if(clientUser.active)
+    if(clientUser && clientUser.active)
     {
         let notification =
             {
@@ -263,13 +263,13 @@ export const deleteProjectById = async (req, res) =>
     let clientUser;
     try
     {
-        let query = {fieldName: "personID", condition: "==", fieldValue: Oldproject.clientID}
+        let query = {fieldName: "personID", condition: "==", fieldValue: "persons/"+ Oldproject.clientID}
         clientUser = await retrieveUserQuery(query)[0];
     }
     catch(error)
     {}
 
-    if(clientUser.active)
+    if(clientUser && clientUser.active)
     {
         let notification =
             {
@@ -299,7 +299,7 @@ export const deleteStageById = async (req, res) =>
 
     try
     {
-        Oldproject = await retrieveProject(req.params.id);
+        Oldproject = await retrieveProject(req.params.projectID);
     }
     catch(error)
     {
@@ -317,9 +317,13 @@ export const deleteStageById = async (req, res) =>
             removedStage=Oldproject.stages[i];
     }
 
+
+    let projectRef = db.collection("projects").doc(req.params.projectID)
+    let batch = db.batch();
     try
     {
-        await deleteStage(req.params.projectID, req.params.stageID);
+        deleteStage(projectRef, req.params.stageID, batch);
+        await batch.commit();
     }
     catch(error)
     {
@@ -330,13 +334,13 @@ export const deleteStageById = async (req, res) =>
     let clientUser;
     try
     {
-        let query = {fieldName: "personID", condition: "==", fieldValue: Oldproject.clientID}
+        let query = {fieldName: "personID", condition: "==", fieldValue: "persons/"+Oldproject.clientID}
         clientUser = await retrieveUserQuery(query)[0];
     }
     catch(error)
     {}
 
-    if(clientUser.active)
+    if(clientUser && clientUser.active)
     {
         let notification =
             {
@@ -379,23 +383,36 @@ export const advanceStage = async (req, res) =>
 
     let project = {stages: []};
     let nextStage;
-    for(let i=0; i<Oldproject.stages.length; i++)
+
+    Oldproject.stages.sort((a, b) => a.order - b.order);
+    if(Oldproject.status === "Finalizado")
     {
-        if(i === Oldproject.stages.length-1)
+        return res.status(400).send({message: "Erro ao avançar etapa. Projeto já foi finalizado"})
+    }
+    for (let i = 0; i < Oldproject.stages.length; i++)
+    {
+        if (Oldproject.stages[i].status === "Em andamento")
         {
-            project.stages.push({id: Oldproject.stages[i].id, status: "Finalizada", endDate: firestore.FieldValue.serverTimestamp()});
-            project.status = "Finalizado";
-            project.endDate = firestore.FieldValue.serverTimestamp();
-        }
-        else
-        {
-            if(Oldproject.stages[i].status === "Em andamento")
+            project.stages.push({
+                id: Oldproject.stages[i].id,
+                status: "Finalizada",
+                endDate: firestore.FieldValue.serverTimestamp()
+            });
+            if (i < Oldproject.stages.length - 1)
             {
-                project.stages.push({id: Oldproject.stages[i].id, status: "Finalizada", endDate: firestore.FieldValue.serverTimestamp()});
+                project.stages.push({
+                    id: Oldproject.stages[i+1].id,
+                    status: "Em andamento",
+                    startDate: firestore.FieldValue.serverTimestamp()
+                });
                 nextStage=Oldproject.stages[i+1];
-                project.stages.push({id: Oldproject.stages[i+1].id, status: "Em andamento", startDate: firestore.FieldValue.serverTimestamp()});
-                break;
             }
+            else
+            {
+                project.status = "Finalizado";
+                project.endDate = firestore.FieldValue.serverTimestamp();
+            }
+            break;
         }
     }
 
@@ -414,12 +431,12 @@ export const advanceStage = async (req, res) =>
     try
     {
         let query = {fieldName: "personID", condition: "==", fieldValue: Oldproject.clientID}
-        clientUser = await retrieveUserQuery(query)[0];
+        clientUser = (await retrieveUserQuery(query))[0];
     }
     catch(error)
     {}
 
-    if(clientUser.active)
+    if(clientUser && clientUser.active)
     {
         let notification = {
             createdAt: firestore.FieldValue.serverTimestamp(),
@@ -428,7 +445,7 @@ export const advanceStage = async (req, res) =>
             receiverID: "users/" + clientUser.id,
             senderID: "users/" + req.currentUser.id,
         };
-        if(!project.status === "Finalizado") {
+        if(project.status !== "Finalizado") {
             notification.message = "O projeto " + Oldproject.name + " avançou para a etapa "+nextStage.name;
             notification.stageID = "stages/" + nextStage.id;
             notification.subject = "Avanço de etapa";
@@ -443,7 +460,14 @@ export const advanceStage = async (req, res) =>
         saveNotification(notification);
     }
 
-    return res.status(200).send({message: "Etapa do projeto "+Oldproject.name+" avançada com sucesso"});
+    if(project.status !== "Finalizado")
+    {
+        return res.status(200).send({message: "Etapa do projeto " + Oldproject.name + " avançada com sucesso"});
+    }
+    else
+    {
+        return res.status(200).send({message: "O projeto " + Oldproject.name + " foi finalizado com sucesso"});
+    }
 }
 
 
@@ -469,20 +493,30 @@ export const returnStage = async (req, res) =>
 
     let project = {stages: []};
     let previousStage;
-    for(let i=0; i<Oldproject.stages.length; i++)
+    Oldproject.stages.sort((a, b) => a.order - b.order);
+    if(Oldproject.stages[0].status === "Em andamento")
     {
-        if(i === 0)
+        return res.status(400).send({message: "Erro ao regredir etapa. O projeto já se encontra na primeira etapa"})
+    }
+    if(Oldproject.status === "Finalizado")
+    {
+        project.status = "Em andamento";
+        project.endDate = null;
+        project.stages.push({id: Oldproject.stages[Oldproject.stages.length-1].id, status: "Em andamento", endDate: null});
+        previousStage = Oldproject.stages[Oldproject.stages.length-1]
+    }
+    else {
+        for (let i = 0; i < Oldproject.stages.length; i++)
         {
-            return res.status(400).send({message: "Projeto já se encontra na primeira etapa"});
-        }
-        else
-        {
-            if(Oldproject.stages[i].status === "Em andamento")
+            if (Oldproject.stages[i].status === "Em andamento")
             {
+
                 project.stages.push({id: Oldproject.stages[i].id, status: "Não iniciada", startDate: null});
-                project.stages.push({id: Oldproject.stages[i-1].id, status: "Em andamento", endDate: null});
-                previousStage=Oldproject.stages[i-1];
+                project.stages.push({id: Oldproject.stages[i - 1].id, status: "Em andamento", endDate: null});
+                previousStage = Oldproject.stages[i - 1];
+
                 break;
+
             }
         }
     }
@@ -501,13 +535,13 @@ export const returnStage = async (req, res) =>
     let clientUser;
     try
     {
-        let query = {fieldName: "personID", condition: "==", fieldValue: Oldproject.clientID}
+        let query = {fieldName: "personID", condition: "==", fieldValue: "person/"+ Oldproject.clientID}
         clientUser = await retrieveUserQuery(query)[0];
     }
     catch(error)
     {}
 
-    if(clientUser.active)
+    if(clientUser && clientUser.active)
     {
         let notification = {
             createdAt: firestore.FieldValue.serverTimestamp(),
