@@ -370,7 +370,7 @@ const ProjectPage = () => {
                 <ActionButton
                     secondary
                     onClick={() =>
-                        navigate("/employee/novo-projeto/etapas", {
+                        navigate(`/${user.role}/novo-projeto/etapas`, {
                             state: { projectData: project, isEditing: true },
                         })
                     }

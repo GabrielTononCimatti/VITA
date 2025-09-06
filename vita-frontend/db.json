@@ -74,46 +74,18 @@
       "phone": "(44) 99881-9712",
       "email": "ezeqCliente@gmail.com",
       "password": "123"
+    },
+    {
+      "id": "1757078844860",
+      "role": "client",
+      "name": "MOstrar telas",
+      "cpf": "12345678900",
+      "razaoSocial": "",
+      "cnpj": "",
+      "phone": "(44) 99881-9791"
     }
   ],
   "projects": [
-    {
-      "id": "3705",
-      "name": "Guibas",
-      "clientId": 2,
-      "startDate": "2025-08-20",
-      "endDate": "2025-08-21",
-      "description": "Proj do guibas",
-      "employeeId": 1,
-      "status": "Em Andamento",
-      "activeStepIndex": 0,
-      "steps": [
-        {
-          "id": 1,
-          "name": "Contrato",
-          "description": "Etapa de assinatura e formalização do contrato.",
-          "requiresDocuments": true
-        },
-        {
-          "id": 2,
-          "name": "Desenvolvimento",
-          "description": "Execução das atividades principais do projeto.",
-          "requiresDocuments": false
-        },
-        {
-          "name": "Etapa adicional",
-          "description": "add",
-          "requiresDocuments": true,
-          "id": 1755693689019
-        },
-        {
-          "id": 3,
-          "name": "Conclusão",
-          "description": "Entrega final e encerramento do projeto.",
-          "requiresDocuments": false
-        }
-      ]
-    },
     {
       "id": "5108",
       "name": "Aparece",
@@ -271,7 +243,7 @@
       "description": "Proj ezequiel",
       "employeeId": 1756298004565,
       "status": "Em Andamento",
-      "activeStepIndex": 2,
+      "activeStepIndex": 1,
       "steps": [
         {
           "id": 1,
@@ -370,6 +342,15 @@
       "razaoSocial": "",
       "cnpj": "",
       "phone": "(44) 99881-9791"
+    },
+    {
+      "id": "1757078844860",
+      "role": "client",
+      "name": "MOstrar telas",
+      "cpf": "12345678900",
+      "razaoSocial": "",
+      "cnpj": "",
+      "phone": "(44) 99881-9791"
     }
   ],
   "documents": [
@@ -390,6 +371,16 @@
       "projectId": "5907",
       "etapaId": 1,
       "url": "https://gemini.google.com/app/1fdbf75566372563"
+    },
+    {
+      "id": "fd81",
+      "name": "Doc de arquivo",
+      "uploadDate": "2025-09-04T13:40:54.636Z",
+      "uploadedBy": "funcio by adm",
+      "projectId": "5907",
+      "etapaId": 1756819947030,
+      "url": "blob:http://localhost:3000/53f2acb7-48af-40fd-b2ce-7407654e7599",
+      "isLocalFile": true
     }
   ],
   "notifications": [
@@ -758,7 +749,7 @@
       "userId": 1756298004565,
       "message": "O projeto \"Proj do ezeq\" avançou para a etapa \"Fundação\".",
       "projectId": "5907",
-      "read": false,
+      "read": true,
       "createdAt": "2025-09-03T01:42:42.334Z"
     },
     {
@@ -792,6 +783,78 @@
       "projectId": null,
       "read": false,
       "createdAt": "2025-09-03T02:18:34.751Z"
+    },
+    {
+      "id": "2940",
+      "userId": 1756298004565,
+      "message": "O projeto \"Proj do ezeq\" regrediu para a etapa \"Desenvolvimento\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-03T23:05:43.690Z"
+    },
+    {
+      "id": "2df9",
+      "userId": 1756819657554,
+      "message": "O projeto \"Proj do ezeq\" regrediu para a etapa \"Desenvolvimento\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-03T23:05:43.701Z"
+    },
+    {
+      "id": "77f6",
+      "userId": "3",
+      "message": "O projeto \"Proj do ezeq\" regrediu para a etapa \"Desenvolvimento\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-03T23:05:43.715Z"
+    },
+    {
+      "id": "5989",
+      "userId": 1756298004565,
+      "message": "O projeto \"Proj do ezeq\" avançou para a etapa \"Fundação\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-05T13:48:58.015Z"
+    },
+    {
+      "id": "12de",
+      "userId": 1756819657554,
+      "message": "O projeto \"Proj do ezeq\" avançou para a etapa \"Fundação\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-05T13:48:58.027Z"
+    },
+    {
+      "id": "4cd8",
+      "userId": "3",
+      "message": "O projeto \"Proj do ezeq\" avançou para a etapa \"Fundação\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-05T13:48:58.041Z"
+    },
+    {
+      "id": "9455",
+      "userId": 1756298004565,
+      "message": "O projeto \"Proj do ezeq\" regrediu para a etapa \"Desenvolvimento\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-05T13:49:00.298Z"
+    },
+    {
+      "id": "47a2",
+      "userId": 1756819657554,
+      "message": "O projeto \"Proj do ezeq\" regrediu para a etapa \"Desenvolvimento\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-05T13:49:00.305Z"
+    },
+    {
+      "id": "42b2",
+      "userId": "3",
+      "message": "O projeto \"Proj do ezeq\" regrediu para a etapa \"Desenvolvimento\".",
+      "projectId": "5907",
+      "read": false,
+      "createdAt": "2025-09-05T13:49:00.317Z"
     }
   ]
 }
