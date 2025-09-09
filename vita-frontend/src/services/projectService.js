@@ -333,7 +333,7 @@ export const deleteProject = async (id) => {
  */
 export const advanceProjectStage = async (id) => {
     try {
-        const response = await api.post(`/project/${id}/advance`);
+        const response = await api.put(`/project/${id}/advance`);
         return response.data;
     } catch (error) {
         console.error(`Erro ao avançar a etapa do projeto ${id}:`, error);
@@ -347,7 +347,7 @@ export const advanceProjectStage = async (id) => {
  */
 export const returnProjectStage = async (id) => {
     try {
-        const response = await api.post(`/project/${id}/return`);
+        const response = await api.put(`/project/${id}/return`);
         return response.data;
     } catch (error) {
         console.error(`Erro ao retornar a etapa do projeto ${id}:`, error);

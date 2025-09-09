@@ -5,7 +5,8 @@ import Sidebar from "../../components/layout/Sidebar";
 import Topbar from "../../components/layout/Topbar";
 import NotificationsPanel from "../../components/layout/NotificationsPanel";
 import ClientHomePage from "./ClientHomePage"; // Página inicial do cliente
-import ClientProjectPage from "./ClientProjectPage"; // Página de projeto do cliente
+// import ClientProjectPage from "./ClientProjectPage"; // Página de projeto do cliente
+import ProjectPage from "../Employee/ProjectPage";
 import ClientSearchPage from "./ClientSearchPage";
 // A página de pesquisa pode ser reutilizada ou adaptada se necessário
 import DocumentsPage from "../Employee/DocumentsPage/index";
@@ -45,7 +46,7 @@ const ClientLayout = () => {
                         {/* Reutilizando a SearchPage */}
                         <Route
                             path="projeto/:projectId"
-                            element={<ClientProjectPage />}
+                            element={<ProjectPage />}
                         />
                         <Route
                             path="projeto/:projectId/etapa/:etapaId/documentos"

@@ -15,6 +15,8 @@ import ProfilePage from "../Employee/ProfilePage";
 import StepsPage from "../Employee/StepsPage";
 import DocumentsPage from "../Employee/DocumentsPage";
 
+import ProjectPage from "../Employee/ProjectPage";
+
 const LayoutWrapper = styled.div`
     display: flex;
 `;
@@ -45,9 +47,13 @@ const AdminLayout = () => {
                     <Routes>
                         <Route path="inicio" element={<AdminHomePage />} />
                         <Route path="pesquisa" element={<AdminSearchPage />} />
-                        <Route
+                        {/* <Route
                             path="projeto/:projectId"
                             element={<EmployeeProjectPage />}
+                        /> */}
+                        <Route
+                            path="projeto/:projectId"
+                            element={<ProjectPage />}
                         />
                         <Route path="perfil" element={<ProfilePage />} />
                         <Route path="pessoas" element={<PeoplePage />} />
