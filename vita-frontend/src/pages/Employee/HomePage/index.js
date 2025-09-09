@@ -4,8 +4,8 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getAllProjects } from "../../../services/projectService";
-import { getAllPeople } from "../../../services/peopleService"; // NOVO: Importando o serviço de pessoas
 import { getDisplayName } from "../../../utils/peopleUtils";
+import { useAuth } from "../../../contexts/AuthContext"; // Para pegar o funcionário logado
 import StatCard from "../../../components/cards/StatCard";
 
 // --- Styled Components (Preservados) ---
@@ -61,7 +61,7 @@ const StatusBadge = styled.span`
     color: white;
     background-color: ${({ status }) => {
         switch (status) {
-            case "Em Andamento":
+            case "Em andamento":
                 return "#6c757d";
             case "Atrasado":
                 return "#ffc107";
@@ -75,8 +75,8 @@ const StatusBadge = styled.span`
 
 // --- Componente da Página ---
 const HomePage = () => {
-    const [projects, setProjects] = useState([]);
-    const [people, setPeople] = useState([]); // NOVO: Estado para armazenar as pessoas
+    const { user } = useAuth(); // Pega o usuário (funcionário) logado
+    const [allProjects, setAllProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const navigate = useNavigate();
@@ -84,22 +84,11 @@ const HomePage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // NOVO: Buscamos projetos e pessoas em paralelo
-                const [projectsData, peopleData] = await Promise.all([
-                    getAllProjects(),
-                    getAllPeople(),
-                ]);
-
-                console.log("Projects Data:", projectsData);
-                console.log("People Data:", peopleData);
-
-                setProjects(projectsData);
-                setPeople(peopleData);
+                const projectsData = await getAllProjects();
+                setAllProjects(projectsData || []);
             } catch (err) {
                 console.error("Erro ao buscar dados:", err);
-                setError(
-                    "Não foi possível carregar os dados da página inicial."
-                );
+                setError("Não foi possível carregar os projetos.");
             } finally {
                 setLoading(false);
             }
@@ -108,45 +97,41 @@ const HomePage = () => {
         fetchData();
     }, []);
 
-    // NOVO: Memoizamos a combinação dos dados para otimização
-    const projectsWithClients = useMemo(() => {
-        if (!projects.length || !people.length) return [];
-
-        return projects.map((project) => {
-            const cleanClientId = project.clientID?.replace("persons/", "");
-            return {
-                ...project,
-                client: people.find((p) => p.id === cleanClientId),
-            };
-        });
-    }, [projects, people]);
+    // NOVO: Filtra os projetos para mostrar apenas os do funcionário logado
+    const employeeProjects = useMemo(() => {
+        if (!allProjects.length || !user) return [];
+        return allProjects.filter((item) =>
+            item.project?.employeeID?.includes(user.id)
+        );
+    }, [allProjects, user]);
 
     const projectStats = useMemo(() => {
-        return projectsWithClients.reduce(
-            (acc, project) => {
-                console.log("Project Status:", project.status);
-                // CORREÇÃO: Usando a chave correta 'status'
-                if (project.status === "Finalizado") {
+        return employeeProjects.reduce(
+            (acc, item) => {
+                const status = item.project?.status || "";
+                if (status === "Finalizado") {
                     acc.completed++;
-                } else if (project.status === "Atrasado") {
+                } else if (status === "Atrasado") {
                     acc.delayed++;
-                } else if (project.status === "Em andamento") {
-                    console.log("Counting In Progress Project");
-                    // Ser mais específico
+                } else if (status === "Em andamento") {
                     acc.inProgress++;
                 }
-                console.log("Current Stats:", acc);
                 return acc;
             },
             { inProgress: 0, delayed: 0, completed: 0 }
         );
-    }, [projectsWithClients]);
+    }, [employeeProjects]);
 
     const recentProjects = useMemo(() => {
-        return projectsWithClients
-            .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+        return employeeProjects
+            .slice()
+            .sort(
+                (a, b) =>
+                    new Date(b.project.startDate) -
+                    new Date(a.project.startDate)
+            )
             .slice(0, 5);
-    }, [projectsWithClients]);
+    }, [employeeProjects]);
 
     if (loading) return <div>Carregando...</div>;
     if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -155,23 +140,23 @@ const HomePage = () => {
         <HomePageWrapper>
             <StatsContainer>
                 <StatCard
-                    title="Projetos em Andamento"
-                    count={projectStats.inProgress ?? 0}
-                    color="#6c757d"
+                    title="Seus Projetos em Andamento"
+                    count={projectStats.inProgress}
+                    color="#E0E0E0"
                 />
                 <StatCard
-                    title="Projetos em Atraso"
-                    count={projectStats.delayed ?? 0}
-                    color="#ffc107"
+                    title="Seus Projetos em Atraso"
+                    count={projectStats.delayed}
+                    color="#FFD700"
                 />
                 <StatCard
-                    title="Projetos Concluídos"
-                    count={projectStats.completed ?? 0}
-                    color="#28a745"
+                    title="Seus Projetos Concluídos"
+                    count={projectStats.completed}
+                    color="#2E8B57"
                 />
             </StatsContainer>
             <RecentProjects>
-                <SectionTitle>Projetos Recentes</SectionTitle>
+                <SectionTitle>Seus Projetos Recentes</SectionTitle>
                 <Table>
                     <thead>
                         <tr>
@@ -183,29 +168,30 @@ const HomePage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {recentProjects.map((project) => (
+                        {recentProjects.map((item) => (
                             <tr
-                                key={project.id}
+                                key={item.project.id}
                                 onClick={() =>
-                                    navigate(`/employee/projeto/${project.id}`)
+                                    navigate(
+                                        `/employee/projeto/${item.project.id}`
+                                    )
                                 }
                             >
-                                <td>{project.id}</td>
-                                <td>{project.name}</td>
-                                {/* CORREÇÃO: Exibindo o nome do cliente a partir dos dados combinados */}
+                                <td>{item.project.id}</td>
+                                <td>{item.project.name}</td>
                                 <td>
-                                    {project.client
-                                        ? getDisplayName(project.client)
+                                    {item.client
+                                        ? getDisplayName(item.client.personData)
                                         : "N/A"}
                                 </td>
                                 <td>
                                     {new Date(
-                                        project.startDate
+                                        item.project.startDate
                                     ).toLocaleDateString()}
                                 </td>
                                 <td>
-                                    <StatusBadge status={project.status}>
-                                        {project.status}
+                                    <StatusBadge status={item.project.status}>
+                                        {item.project.status}
                                     </StatusBadge>
                                 </td>
                             </tr>

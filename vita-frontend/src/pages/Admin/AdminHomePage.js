@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import { getAllProjects } from "../../services/projectService";
-import { getAllPeople } from "../../services/peopleService";
-import { getAllUsers } from "../../services/userService"; // NOVO: Importando o serviço de usuários
+import { getAllProjects } from "../../services/projectService"; // Apenas este serviço é necessário agora
 import { getDisplayName } from "../../utils/peopleUtils";
 import StatCard from "../../components/cards/StatCard";
 import { FaBell } from "react-icons/fa";
@@ -94,17 +92,10 @@ const ActionButton = styled.button`
     color: white;
 `;
 
-// --- Helpers ---
-const stripRef = (ref) => {
-    if (!ref || typeof ref !== "string") return null;
-    return ref.includes("/") ? ref.split("/").pop() : ref;
-};
-
 // --- Componente ---
 const AdminHomePage = () => {
+    // ESTADO SIMPLIFICADO: Apenas uma lista de projetos é necessária
     const [projects, setProjects] = useState([]);
-    const [people, setPeople] = useState([]);
-    const [users, setUsers] = useState([]); // NOVO: Estado para a lista de usuários
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -114,13 +105,9 @@ const AdminHomePage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // NOVO: Buscando projetos, pessoas E usuários
-                const [projectsData, peopleData, usersData] = await Promise.all(
-                    [getAllProjects(), getAllPeople(), getAllUsers()]
-                );
+                // BUSCA ÚNICA: Chamamos apenas getAllProjects
+                const projectsData = await getAllProjects();
                 setProjects(projectsData || []);
-                setPeople(peopleData || []);
-                setUsers(usersData || []); // Armazena os usuários no estado
             } catch (err) {
                 console.error(err);
                 setError("Não foi possível carregar os dados.");
@@ -131,35 +118,12 @@ const AdminHomePage = () => {
         fetchData();
     }, []);
 
-    const projectsWithData = useMemo(() => {
-        if (!projects?.length || !people?.length || !users?.length) return [];
-
-        return projects.map((project) => {
-            const client = people.find(
-                (p) => p.id === stripRef(project.clientID)
-            );
-
-            // CORREÇÃO: Lógica de busca do funcionário em duas etapas
-            const employeeUser = users.find(
-                (u) => u.id === stripRef(project.employeeID)
-            );
-            const employeePerson = employeeUser
-                ? people.find((p) => p.id === stripRef(employeeUser.personID))
-                : null;
-
-            return {
-                ...project,
-                client: client || null,
-                employee: employeePerson || null, // O resultado da busca de duas etapas
-            };
-        });
-    }, [projects, people, users]);
-
-    // A lógica de projectStats e recentProjects continua a mesma e funcionará com os dados corretos
     const projectStats = useMemo(() => {
-        return projectsWithData.reduce(
-            (acc, project) => {
-                const s = String(project.status || "").toLowerCase();
+        return projects.reduce(
+            (acc, item) => {
+                // LÓGICA ATUALIZADA: Acessa o status dentro de item.project
+                const status = item.project?.status || "";
+                const s = status.toLowerCase();
                 if (s.includes("final") || s.includes("conclu"))
                     acc.completed++;
                 else if (s.includes("atras")) acc.delayed++;
@@ -169,21 +133,25 @@ const AdminHomePage = () => {
             },
             { inProgress: 0, delayed: 0, completed: 0 }
         );
-    }, [projectsWithData]);
+    }, [projects]);
 
     const recentProjects = useMemo(() => {
-        return projectsWithData
+        return projects
             .slice()
-            .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))
+            .sort(
+                (a, b) =>
+                    new Date(b.project.startDate) -
+                    new Date(a.project.startDate)
+            )
             .slice(0, 5);
-    }, [projectsWithData]);
+    }, [projects]);
 
     const handleRowClick = (projectId) =>
         navigate(`/admin/projeto/${projectId}`);
 
-    const handleNotificationClick = (project, e) => {
+    const handleNotificationClick = (projectItem, e) => {
         e.stopPropagation();
-        setSelectedProject(project);
+        setSelectedProject(projectItem.project); // Passa o objeto do projeto para o painel
         setIsPanelOpen(true);
     };
 
@@ -210,11 +178,9 @@ const AdminHomePage = () => {
                     color="#2E8B57"
                 />
             </CardsContainer>
-
             <Title as="h2" style={{ fontSize: "24px" }}>
                 Projetos Recentes
             </Title>
-
             <TableWrapper>
                 <StyledTable>
                     <thead>
@@ -228,31 +194,33 @@ const AdminHomePage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {recentProjects.map((project) => (
+                        {recentProjects.map((item) => (
                             <tr
-                                key={project.id}
-                                onClick={() => handleRowClick(project.id)}
+                                key={item.project.id}
+                                onClick={() => handleRowClick(item.project.id)}
                             >
-                                <td>{project.id}</td>
-                                <td>{project.name}</td>
+                                <td>{item.project.id}</td>
+                                <td>{item.project.name}</td>
                                 <td>
-                                    {project.client
-                                        ? getDisplayName(project.client)
+                                    {item.client
+                                        ? getDisplayName(item.client.personData)
                                         : "N/A"}
                                 </td>
                                 <td>
-                                    {project.employee
-                                        ? getDisplayName(project.employee)
+                                    {item.employee
+                                        ? getDisplayName(
+                                              item.employee.personData
+                                          )
                                         : "N/A"}
                                 </td>
                                 <td>
-                                    <StatusBadge status={project.status}>
-                                        {project.status}
+                                    <StatusBadge status={item.project.status}>
+                                        {item.project.status}
                                     </StatusBadge>
                                 </td>
                                 <td
                                     onClick={(e) =>
-                                        handleNotificationClick(project, e)
+                                        handleNotificationClick(item, e)
                                     }
                                 >
                                     <FaBell
@@ -267,13 +235,11 @@ const AdminHomePage = () => {
                     </tbody>
                 </StyledTable>
             </TableWrapper>
-
             <ButtonsContainer>
                 <ActionButton onClick={() => navigate("/admin/pesquisa")}>
                     Ver Todos os Projetos
                 </ActionButton>
             </ButtonsContainer>
-
             {selectedProject && (
                 <ProjectNotificationsPanel
                     isOpen={isPanelOpen}

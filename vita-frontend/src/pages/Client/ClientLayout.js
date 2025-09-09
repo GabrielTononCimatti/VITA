@@ -6,6 +6,7 @@ import Topbar from "../../components/layout/Topbar";
 import NotificationsPanel from "../../components/layout/NotificationsPanel";
 import ClientHomePage from "./ClientHomePage"; // Página inicial do cliente
 import ClientProjectPage from "./ClientProjectPage"; // Página de projeto do cliente
+import ClientSearchPage from "./ClientSearchPage";
 // A página de pesquisa pode ser reutilizada ou adaptada se necessário
 import DocumentsPage from "../Employee/DocumentsPage/index";
 import SearchPage from "../Employee/SearchPage";
@@ -40,7 +41,7 @@ const ClientLayout = () => {
                 <div style={{ padding: "24px" }}>
                     <Routes>
                         <Route path="inicio" element={<ClientHomePage />} />
-                        <Route path="pesquisa" element={<SearchPage />} />{" "}
+                        <Route path="pesquisa" element={<ClientSearchPage />} />
                         {/* Reutilizando a SearchPage */}
                         <Route
                             path="projeto/:projectId"

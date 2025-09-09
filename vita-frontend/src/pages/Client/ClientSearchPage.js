@@ -1,16 +1,17 @@
-// Caminho: vita-frontend/src/pages/Admin/AdminSearchPage.js
+// Caminho: vita-frontend/src/pages/Client/ClientSearchPage.js
 
 import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { getAllProjects } from "../../services/projectService";
 import { getDisplayName } from "../../utils/peopleUtils";
+import { useAuth } from "../../contexts/AuthContext";
 
-// --- Styled Components (mantidos) ---
+// --- Styled Components (reutilizados) ---
 const SearchContainer = styled.div`
     padding: 24px;
 `;
-// ... (demais styled-components mantidos)
+
 const Title = styled.h1`
     color: ${({ theme }) => theme.colors.primary};
     margin-bottom: 24px;
@@ -96,10 +97,17 @@ const FilterLabel = styled.label`
     cursor: pointer;
 `;
 
+// --- Helpers ---
+const stripRef = (ref) => {
+    if (!ref || typeof ref !== "string") return null;
+    return ref.includes("/") ? ref.split("/").pop() : ref;
+};
+
 // --- Componente da Página ---
-const AdminSearchPage = () => {
+const ClientSearchPage = () => {
     const navigate = useNavigate();
-    const [projects, setProjects] = useState([]);
+    const { user } = useAuth(); // Pega o cliente logado
+    const [allProjects, setAllProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [statusFilters, setStatusFilters] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -109,7 +117,7 @@ const AdminSearchPage = () => {
         const fetchData = async () => {
             try {
                 const projectsData = await getAllProjects();
-                setProjects(projectsData || []);
+                setAllProjects(projectsData || []);
             } catch (err) {
                 setError("Não foi possível carregar os projetos.");
             } finally {
@@ -118,6 +126,15 @@ const AdminSearchPage = () => {
         };
         fetchData();
     }, []);
+
+    // Primeiro, filtramos os projetos que pertencem a este cliente
+    const clientProjects = useMemo(() => {
+        if (!allProjects.length || !user || !user.personID) return [];
+        const userPersonId = stripRef(user.personID);
+        return allProjects.filter(
+            (item) => stripRef(item.project?.clientID) === userPersonId
+        );
+    }, [allProjects, user]);
 
     const handleStatusFilterChange = (e) => {
         const { value, checked } = e.target;
@@ -128,11 +145,11 @@ const AdminSearchPage = () => {
         );
     };
 
+    // Agora, a busca e os filtros operam sobre a lista de projetos do cliente
     const filteredProjects = useMemo(() => {
-        return projects.filter((item) => {
-            const { project, client, employee } = item;
+        return clientProjects.filter((item) => {
+            const { project } = item;
 
-            // Filtro por status
             if (
                 statusFilters.length > 0 &&
                 !statusFilters.includes(project.status)
@@ -140,35 +157,27 @@ const AdminSearchPage = () => {
                 return false;
             }
 
-            // Filtro pela barra de pesquisa
-            const clientName = client ? getDisplayName(client.personData) : "";
-            const employeeName = employee
-                ? getDisplayName(employee.personData)
-                : "";
             const searchTermLower = searchTerm.toLowerCase();
             if (searchTermLower === "") return true;
 
+            // O cliente só pode pesquisar por nome ou ID do projeto
             return (
                 project.name.toLowerCase().includes(searchTermLower) ||
-                project.id.toString().includes(searchTermLower) ||
-                (clientName &&
-                    clientName.toLowerCase().includes(searchTermLower)) ||
-                (employeeName &&
-                    employeeName.toLowerCase().includes(searchTermLower))
+                project.id.toString().includes(searchTermLower)
             );
         });
-    }, [projects, searchTerm, statusFilters]);
+    }, [clientProjects, searchTerm, statusFilters]);
 
     if (loading) return <div>Carregando...</div>;
     if (error) return <div style={{ color: "red" }}>{error}</div>;
 
     return (
         <SearchContainer>
-            <Title>Todos os Projetos</Title>
+            <Title>Seus Projetos</Title>
             <Controls>
                 <SearchInput
                     type="text"
-                    placeholder="Pesquisar por projeto, ID, cliente ou funcionário..."
+                    placeholder="Pesquisar em seus projetos por nome ou ID..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -207,8 +216,8 @@ const AdminSearchPage = () => {
                         <tr>
                             <th>ID</th>
                             <th>Nome do Projeto</th>
-                            <th>Cliente</th>
-                            <th>Funcionário</th>
+                            <th>Responsável (Vulcano)</th>
+                            <th>Data de Início</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -218,23 +227,23 @@ const AdminSearchPage = () => {
                                 key={item.project.id}
                                 onClick={() =>
                                     navigate(
-                                        `/admin/projeto/${item.project.id}`
+                                        `/client/projeto/${item.project.id}`
                                     )
                                 }
                             >
                                 <td>{item.project.id}</td>
                                 <td>{item.project.name}</td>
                                 <td>
-                                    {item.client
-                                        ? getDisplayName(item.client.personData)
-                                        : "N/A"}
-                                </td>
-                                <td>
                                     {item.employee
                                         ? getDisplayName(
                                               item.employee.personData
                                           )
                                         : "N/A"}
+                                </td>
+                                <td>
+                                    {new Date(
+                                        item.project.startDate
+                                    ).toLocaleDateString()}
                                 </td>
                                 <td>
                                     <StatusBadge status={item.project.status}>
@@ -250,4 +259,4 @@ const AdminSearchPage = () => {
     );
 };
 
-export default AdminSearchPage;
+export default ClientSearchPage;

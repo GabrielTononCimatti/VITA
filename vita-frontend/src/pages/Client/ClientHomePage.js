@@ -5,77 +5,71 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { getAllProjects } from "../../services/projectService";
 import { useAuth } from "../../contexts/AuthContext";
+import { getDisplayName } from "../../utils/peopleUtils";
 import StatCard from "../../components/cards/StatCard";
 
-// --- Styled Components (estilo preservado / theme-aware) ---
-const PageWrapper = styled.div`
+// --- Styled Components (mantidos) ---
+const HomePageWrapper = styled.div`
     padding: 24px;
 `;
 
-const Title = styled.h1`
-    color: ${({ theme }) => theme.colors.primary};
-    margin-bottom: ${({ theme }) => theme.spacing.large};
+const StatsContainer = styled.div`
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
 `;
 
-const CardsContainer = styled.div`
-    display: flex;
-    gap: ${({ theme }) => theme.spacing.large};
-    margin-bottom: ${({ theme }) => theme.spacing.large};
-    flex-wrap: wrap;
-`;
-
-const TableWrapper = styled.div`
-    background-color: ${({ theme }) => theme.colors.white};
-    border-radius: ${({ theme }) => theme.borderRadius};
-    padding: ${({ theme }) => theme.spacing.large};
+const RecentProjects = styled.div`
+    background-color: white;
+    padding: 24px;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    overflow-x: auto;
 `;
 
-const StyledTable = styled.table`
+const SectionTitle = styled.h2`
+    margin-top: 0;
+    margin-bottom: 20px;
+`;
+
+const Table = styled.table`
     width: 100%;
     border-collapse: collapse;
-
     th,
     td {
         padding: 12px 15px;
         text-align: left;
-        border-bottom: 1px solid ${({ theme }) => theme.colors.lightGray};
+        border-bottom: 1px solid #f1f1f1;
     }
-
     th {
-        background-color: #f8f9fa;
         font-weight: bold;
-        color: ${({ theme }) => theme.colors.primary};
+        color: #800020;
     }
-
     tbody tr {
         cursor: pointer;
         &:hover {
-            background-color: #f1f1f1;
+            background-color: #f9f9f9;
         }
     }
 `;
 
 const StatusBadge = styled.span`
-    padding: 6px 10px;
+    padding: 4px 8px;
     border-radius: 12px;
-    font-weight: 700;
     font-size: 12px;
-    display: inline-block;
-    background-color: ${({ theme, status }) => {
-        const s = String(status || "").toLowerCase();
-        if (s.includes("andam") || s.includes("em andamento"))
-            return theme.colors.gray || "#6c757d";
-        if (s.includes("final") || s.includes("conclu"))
-            return theme.colors.green || "#28a745";
-        if (s.includes("atras")) return theme.colors.yellow || "#ffc107";
-        return "#ccc";
-    }};
-    color: ${({ theme, status }) => {
-        const s = String(status || "").toLowerCase();
-        if (s.includes("atras")) return theme.colors.black || "#000";
-        return theme.colors.white || "#fff";
+    font-weight: bold;
+    color: white;
+    background-color: ${({ status }) => {
+        switch (status) {
+            case "Em andamento":
+                return "#6c757d";
+            case "Atrasado":
+                return "#ffc107";
+            case "Finalizado":
+                return "#28a745";
+            default:
+                return "#6c757d";
+        }
     }};
 `;
 
@@ -85,10 +79,10 @@ const stripRef = (ref) => {
     return ref.includes("/") ? ref.split("/").pop() : ref;
 };
 
-// --- Componente ---
+// --- Componente da Página ---
 const ClientHomePage = () => {
-    const { user } = useAuth();
-    const [projects, setProjects] = useState([]);
+    const { user } = useAuth(); // Pega o cliente logado
+    const [allProjects, setAllProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const navigate = useNavigate();
@@ -97,12 +91,9 @@ const ClientHomePage = () => {
         const fetchData = async () => {
             try {
                 const projectsData = await getAllProjects();
-                setProjects(projectsData || []);
+                setAllProjects(projectsData || []);
             } catch (err) {
-                console.error(
-                    "Erro ao buscar projetos na ClientHomePage:",
-                    err
-                );
+                console.error("Erro ao buscar projetos:", err);
                 setError("Não foi possível carregar seus projetos.");
             } finally {
                 setLoading(false);
@@ -111,21 +102,23 @@ const ClientHomePage = () => {
         fetchData();
     }, []);
 
+    // Filtra para mostrar apenas projetos DESTE cliente
     const clientProjects = useMemo(() => {
-        if (!projects.length || !user || !user.personID) return [];
+        if (!allProjects.length || !user || !user.personID) return [];
+
         const userPersonId = stripRef(user.personID);
-        return projects.filter((p) => stripRef(p.clientID) === userPersonId);
-    }, [projects, user]);
+        return allProjects.filter(
+            (item) => stripRef(item.project?.clientID) === userPersonId
+        );
+    }, [allProjects, user]);
 
     const projectStats = useMemo(() => {
         return clientProjects.reduce(
-            (acc, project) => {
-                const s = String(project.status || "").toLowerCase();
-                if (s.includes("final") || s.includes("conclu"))
-                    acc.completed++;
-                else if (s.includes("atras")) acc.delayed++;
-                else if (s.includes("andam") || s.includes("em andamento"))
-                    acc.inProgress++;
+            (acc, item) => {
+                const status = item.project?.status || "";
+                if (status === "Finalizado") acc.completed++;
+                else if (status === "Atrasado") acc.delayed++;
+                else if (status === "Em andamento") acc.inProgress++;
                 return acc;
             },
             { inProgress: 0, delayed: 0, completed: 0 }
@@ -136,77 +129,79 @@ const ClientHomePage = () => {
     if (error) return <div style={{ color: "red" }}>{error}</div>;
 
     return (
-        <PageWrapper>
-            <Title>Seus Projetos</Title>
-
-            <CardsContainer>
-                {/* envio tanto count quanto value pra compatibilidade com diferentes StatCard implementations */}
+        <HomePageWrapper>
+            <StatsContainer>
                 <StatCard
                     title="Projetos em Andamento"
-                    count={projectStats.inProgress ?? 0}
-                    value={projectStats.inProgress ?? 0}
-                    color="#6c757d"
+                    count={projectStats.inProgress}
+                    color="#E0E0E0"
                 />
                 <StatCard
                     title="Projetos em Atraso"
-                    count={projectStats.delayed ?? 0}
-                    value={projectStats.delayed ?? 0}
-                    color="#ffc107"
+                    count={projectStats.delayed}
+                    color="#FFD700"
                 />
                 <StatCard
                     title="Projetos Finalizados"
-                    count={projectStats.completed ?? 0}
-                    value={projectStats.completed ?? 0}
-                    color="#28a745"
+                    count={projectStats.completed}
+                    color="#2E8B57"
                 />
-            </CardsContainer>
-
-            <TableWrapper>
-                <StyledTable>
+            </StatsContainer>
+            <RecentProjects>
+                <SectionTitle>Seus Projetos</SectionTitle>
+                <Table>
                     <thead>
                         <tr>
                             <th>Nome do Projeto</th>
+                            <th>Responsável (Vulcano)</th>
                             <th>Data de Início</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {clientProjects.length > 0 ? (
-                            clientProjects.map((project) => (
+                            clientProjects.map((item) => (
                                 <tr
-                                    key={project.id}
+                                    key={item.project.id}
                                     onClick={() =>
                                         navigate(
-                                            `/client/projeto/${project.id}`
+                                            `/client/projeto/${item.project.id}`
                                         )
                                     }
                                 >
-                                    <td>{project.name}</td>
+                                    <td>{item.project.name}</td>
                                     <td>
-                                        {project.startDate
-                                            ? new Date(
-                                                  project.startDate
-                                              ).toLocaleDateString()
+                                        {item.employee
+                                            ? getDisplayName(
+                                                  item.employee.personData
+                                              )
                                             : "N/A"}
                                     </td>
                                     <td>
-                                        <StatusBadge status={project.status}>
-                                            {project.status || "Sem status"}
+                                        {new Date(
+                                            item.project.startDate
+                                        ).toLocaleDateString()}
+                                    </td>
+                                    <td>
+                                        <StatusBadge
+                                            status={item.project.status}
+                                        >
+                                            {item.project.status}
                                         </StatusBadge>
                                     </td>
                                 </tr>
                             ))
                         ) : (
                             <tr>
-                                <td colSpan="3" style={{ textAlign: "center" }}>
+                                <td colSpan="4" style={{ textAlign: "center" }}>
                                     Você ainda não possui projetos.
                                 </td>
                             </tr>
                         )}
                     </tbody>
-                </StyledTable>
-            </TableWrapper>
-        </PageWrapper>
+                </Table>
+            </RecentProjects>
+        </HomePageWrapper>
     );
 };
 

@@ -4,10 +4,10 @@ import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { getAllProjects } from "../../../services/projectService";
-import { getAllPeople } from "../../../services/peopleService";
 import { getDisplayName } from "../../../utils/peopleUtils";
+import { useAuth } from "../../../contexts/AuthContext"; // Para pegar o funcionário logado
 
-// --- Styled Components (Preservados e com adições) ---
+// --- Styled Components (Preservados) ---
 const SearchContainer = styled.div`
     padding: 24px;
 `;
@@ -81,7 +81,6 @@ const StatusBadge = styled.span`
     }};
 `;
 
-// NOVO: Componente para os filtros de status
 const FilterContainer = styled.div`
     display: flex;
     align-items: center;
@@ -101,10 +100,9 @@ const FilterLabel = styled.label`
 // --- Componente da Página ---
 const SearchPage = () => {
     const navigate = useNavigate();
-    const [projects, setProjects] = useState([]);
-    const [people, setPeople] = useState([]);
+    const { user } = useAuth(); // Pega o usuário (funcionário) logado
+    const [allProjects, setAllProjects] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-    // NOVO: Estado para os filtros de status
     const [statusFilters, setStatusFilters] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
@@ -112,14 +110,9 @@ const SearchPage = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [projectsData, peopleData] = await Promise.all([
-                    getAllProjects(),
-                    getAllPeople(),
-                ]);
-                setProjects(projectsData);
-                setPeople(peopleData);
+                const projectsData = await getAllProjects();
+                setAllProjects(projectsData || []);
             } catch (err) {
-                console.error("Erro ao buscar dados:", err);
                 setError("Não foi possível carregar os projetos.");
             } finally {
                 setLoading(false);
@@ -128,17 +121,13 @@ const SearchPage = () => {
         fetchData();
     }, []);
 
-    const projectsWithClients = useMemo(() => {
-        if (!projects.length || !people.length) return [];
-
-        return projects.map((project) => {
-            const cleanClientId = project.clientID?.replace("persons/", "");
-            return {
-                ...project,
-                client: people.find((p) => p.id === cleanClientId),
-            };
-        });
-    }, [projects, people]);
+    // NOVO: Primeiro, filtramos os projetos do funcionário
+    const employeeProjects = useMemo(() => {
+        if (!allProjects.length || !user) return [];
+        return allProjects.filter((item) =>
+            item.project?.employeeID?.includes(user.id)
+        );
+    }, [allProjects, user]);
 
     const handleStatusFilterChange = (e) => {
         const { value, checked } = e.target;
@@ -149,21 +138,21 @@ const SearchPage = () => {
         );
     };
 
+    // NOVO: A lógica de busca e filtro agora opera sobre a lista já filtrada de projetos do funcionário
     const filteredProjects = useMemo(() => {
-        return projectsWithClients.filter((project) => {
-            // Filtro por status
+        return employeeProjects.filter((item) => {
+            const { project, client } = item;
+
             if (
                 statusFilters.length > 0 &&
                 !statusFilters.includes(project.status)
             ) {
                 return false;
             }
-            // Filtro pela barra de pesquisa
-            const clientName = project.client
-                ? getDisplayName(project.client)
-                : "";
+
+            const clientName = client ? getDisplayName(client.personData) : "";
             const searchTermLower = searchTerm.toLowerCase();
-            if (searchTermLower === "") return true; // Se a busca estiver vazia, não filtra por texto
+            if (searchTermLower === "") return true;
 
             return (
                 project.name.toLowerCase().includes(searchTermLower) ||
@@ -172,23 +161,22 @@ const SearchPage = () => {
                     clientName.toLowerCase().includes(searchTermLower))
             );
         });
-    }, [projectsWithClients, searchTerm, statusFilters]);
+    }, [employeeProjects, searchTerm, statusFilters]);
 
     if (loading) return <div>Carregando...</div>;
     if (error) return <div style={{ color: "red" }}>{error}</div>;
 
     return (
         <SearchContainer>
-            <Title>Pesquisar Projetos</Title>
+            <Title>Seus Projetos</Title>
             <Controls>
                 <SearchInput
                     type="text"
-                    placeholder="Pesquisar por nome do projeto, ID ou cliente..."
+                    placeholder="Pesquisar em seus projetos por nome, ID ou cliente..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </Controls>
-            {/* NOVO: Filtros de status reinseridos */}
             <FilterContainer>
                 <strong>Filtrar por Status:</strong>
                 <FilterLabel>
@@ -229,28 +217,30 @@ const SearchPage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredProjects.map((project) => (
+                        {filteredProjects.map((item) => (
                             <tr
-                                key={project.id}
+                                key={item.project.id}
                                 onClick={() =>
-                                    navigate(`/employee/projeto/${project.id}`)
+                                    navigate(
+                                        `/employee/projeto/${item.project.id}`
+                                    )
                                 }
                             >
-                                <td>{project.id}</td>
-                                <td>{project.name}</td>
+                                <td>{item.project.id}</td>
+                                <td>{item.project.name}</td>
                                 <td>
-                                    {project.client
-                                        ? getDisplayName(project.client)
+                                    {item.client
+                                        ? getDisplayName(item.client.personData)
                                         : "N/A"}
                                 </td>
                                 <td>
                                     {new Date(
-                                        project.startDate
+                                        item.project.startDate
                                     ).toLocaleDateString()}
                                 </td>
                                 <td>
-                                    <StatusBadge status={project.status}>
-                                        {project.status}
+                                    <StatusBadge status={item.project.status}>
+                                        {item.project.status}
                                     </StatusBadge>
                                 </td>
                             </tr>
