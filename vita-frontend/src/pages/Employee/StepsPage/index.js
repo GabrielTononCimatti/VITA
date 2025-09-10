@@ -1,44 +1,89 @@
+// Caminho: vita-frontend/src/pages/Employee/StepsPage/index.js
+
 import React, { useState, useEffect } from "react";
+// NOVO: Importando useNavigate, que substitui useHistory
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../../contexts/AuthContext";
-import { FaTrash, FaPen } from "react-icons/fa";
-// Vamos precisar de uma função para criar o projeto no nosso service
+import {
+    createProject,
+    getProjectById,
+    updateProject,
+} from "../../../services/projectService";
+import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { createProject, updateProject } from "../../../services/projectService";
 
-// --- Styled Components ---
+// --- Styled Components (Preservados) ---
 const PageWrapper = styled.div`
-    display: flex;
-    gap: ${({ theme }) => theme.spacing.large};
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+`;
+// ... (demais styled-components mantidos)
+const Title = styled.h1`
+    color: ${({ theme }) => theme.colors.primary};
+`;
 
-    @media (max-width: 1024px) {
-        flex-direction: column;
+const ContentWrapper = styled.div`
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 32px;
+
+    @media (max-width: 992px) {
+        grid-template-columns: 1fr;
     }
 `;
 
-const FormContainer = styled.div`
-    flex: 2; // O formulário ocupa 2/3 do espaço
-    background-color: ${({ theme }) => theme.colors.white};
-    padding: ${({ theme }) => theme.spacing.large};
-    border-radius: ${({ theme }) => theme.borderRadius};
+const FormSection = styled.div`
+    background: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 `;
 
-const StepsContainer = styled.div`
-    flex: 1; // A lista de etapas ocupa 1/3
-    background-color: #f8f9fa;
-    padding: ${({ theme }) => theme.spacing.large};
-    border-radius: ${({ theme }) => theme.borderRadius};
-    max-height: 80vh;
-    overflow-y: auto;
+const StepsListSection = styled.div`
+    background: #f8f9fa;
+    padding: 24px;
+    border-radius: 8px;
+`;
+
+const SectionTitle = styled.h2`
+    margin-top: 0;
+    border-bottom: 2px solid ${({ theme }) => theme.colors.primary};
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+`;
+
+const FormGroup = styled.div`
+    margin-bottom: 20px;
+`;
+
+const Label = styled.label`
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+`;
+
+const Input = styled.input`
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+`;
+
+const Textarea = styled.textarea`
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    min-height: 80px;
 `;
 
 const StepCard = styled.div`
-    background-color: white;
-    padding: ${({ theme }) => theme.spacing.medium};
+    background: white;
+    padding: 15px;
     border-radius: 4px;
-    margin-bottom: ${({ theme }) => theme.spacing.medium};
-    border-left: 5px solid ${({ theme }) => theme.colors.primary};
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -46,318 +91,360 @@ const StepCard = styled.div`
 
 const StepActions = styled.div`
     display: flex;
-    gap: ${({ theme }) => theme.spacing.medium};
-    color: ${({ theme }) => theme.colors.textLight};
-
-    svg {
-        cursor: pointer;
-        &:hover {
-            color: ${({ theme }) => theme.colors.primary};
-        }
-    }
+    gap: 10px;
 `;
 
-const ButtonsContainer = styled.div`
+const ButtonContainer = styled.div`
     display: flex;
     justify-content: space-between;
-    margin-top: ${({ theme }) => theme.spacing.large};
+    margin-top: 24px;
 `;
 
 const Button = styled.button`
-    padding: 10px 20px;
-    font-size: 16px;
-    font-weight: bold;
+    padding: 12px 24px;
+    border: none;
     border-radius: 4px;
-    background-color: ${({ theme, primary }) =>
-        primary ? theme.colors.primary : "#6c757d"};
+    font-weight: bold;
+    cursor: pointer;
+`;
+
+const BackButton = styled(Button)`
+    background-color: #f1f1f1;
+`;
+
+const SubmitButton = styled(Button)`
+    background-color: ${({ theme }) => theme.colors.primary};
     color: white;
 `;
 
-// -- Componente Principal ---
+// --- Componente ---
 const StepsPage = () => {
-    const { user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
-    const { projectData, isEditing } = location.state || {};
+    const { projectId } = useParams();
 
-    // Etapas padrão
-    const defaultSteps = [
+    const [projectInfo, setProjectInfo] = useState(
+        location.state?.projectData || {}
+    );
+    const [initialStages, setInitialStages] = useState([]); // Para lógica de edição
+
+    // As 3 etapas padrão
+    const defaultStages = [
         {
-            id: 1,
+            id: `temp-${Date.now()}-1`,
+            order: 1,
             name: "Contrato",
             description: "Etapa de assinatura e formalização do contrato.",
-            requiresDocuments: true,
+            status: "Não iniciada",
+            requiresDocument: true,
         },
         {
-            id: 2,
+            id: `temp-${Date.now()}-2`,
+            order: 2,
             name: "Desenvolvimento",
             description: "Execução das atividades principais do projeto.",
-            requiresDocuments: false,
+            status: "Não iniciada",
+            requiresDocument: false,
         },
         {
-            id: 3,
-            name: "Conclusão",
+            id: `temp-${Date.now()}-3`,
+            order: 3,
+            name: "Finalização",
             description: "Entrega final e encerramento do projeto.",
-            requiresDocuments: false,
+            status: "Não iniciada",
+            requiresDocument: false,
         },
     ];
 
-    const [steps, setSteps] = useState(defaultSteps);
+    const [stages, setStages] = useState(defaultStages);
     const [currentStep, setCurrentStep] = useState({
         name: "",
         description: "",
-        requiresDocuments: false,
+        requiresDocument: false,
     });
     const [editingStepId, setEditingStepId] = useState(null);
 
-    //ANTIGA
-    // const handleAddStep = (e) => {
-    //     e.preventDefault();
-    //     if (!currentStep.name) return;
-    //     setSteps([...steps, { ...currentStep, id: Date.now() }]); // Usando timestamp como ID simples
-    //     setCurrentStep({ name: "", description: "", requiresDocuments: false }); // Limpa o formulário
-    // };
+    // Lógica para carregar dados em modo de edição
+    useEffect(() => {
+        if (projectId) {
+            const fetchProjectForEdit = async () => {
+                try {
+                    const data = await getProjectById(projectId);
+                    setProjectInfo(location.state?.projectData || data.project);
 
-    //NOVA
-    const handleStepSubmit = (e) => {
-        e.preventDefault();
-        if (!currentStep.name) return;
+                    const sortedStages = data.project.stages.sort(
+                        (a, b) => a.order - b.order
+                    );
+                    setStages(sortedStages);
+                    setInitialStages(sortedStages); // Guarda o estado original
+                } catch (error) {
+                    console.error("Erro ao buscar projeto para edição:", error);
+                    alert("Não foi possível carregar o projeto para edição.");
+                    navigate("/employee/home");
+                }
+            };
+            fetchProjectForEdit();
+        } else {
+            // Garante que o estado das etapas seja o padrão ao criar novo projeto
+            setStages(defaultStages);
+        }
+    }, [projectId, navigate, location.state]);
+
+    const handleStepChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setCurrentStep((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value,
+        }));
+    };
+
+    // Adiciona ou atualiza uma etapa
+    const handleAddOrUpdateStep = () => {
+        if (!currentStep.name) {
+            alert("O nome da etapa é obrigatório.");
+            return;
+        }
 
         if (editingStepId) {
-            // Se estiver editando, atualize a etapa existente
-            setSteps(
-                steps.map((step) =>
-                    step.id === editingStepId
-                        ? { ...step, ...currentStep }
-                        : step
+            // Atualizando
+            setStages(
+                stages.map((s) =>
+                    s.id === editingStepId ? { ...s, ...currentStep } : s
                 )
             );
-            setEditingStepId(null); // Sai do modo de edição
+            setEditingStepId(null);
         } else {
-            // Se não, adicione uma nova etapa
-            setSteps([...steps, { ...currentStep, id: Date.now() }]);
+            // Adicionando
+            const newStep = {
+                ...currentStep,
+                id: `temp-${Date.now()}`,
+                order: stages.length + 1,
+                status: "Não iniciada",
+            };
+            setStages([...stages, newStep]);
         }
-
-        setCurrentStep({ name: "", description: "", requiresDocuments: false }); // Limpa o formulário
+        setCurrentStep({ name: "", description: "", requiresDocument: false }); // Limpa o formulário
     };
 
-    const handleEditStep = (stepToEdit) => {
-        setEditingStepId(stepToEdit.id);
-        setCurrentStep(stepToEdit);
+    // Prepara o formulário para edição de uma etapa
+    const handleEditStep = (step) => {
+        setEditingStepId(step.id);
+        setCurrentStep({
+            name: step.name,
+            description: step.description,
+            requiresDocument: step.requiresDocument,
+        });
     };
 
-    // Se o usuário chegar aqui sem os dados do projeto, redireciona de volta
-    useEffect(() => {
-        if (isEditing && projectData && projectData.steps) {
-            setSteps(projectData.steps);
-        } else if (!isEditing) {
-            setSteps(defaultSteps);
+    const handleRemoveStep = (id) => {
+        if (window.confirm("Tem certeza que deseja remover esta etapa?")) {
+            setStages(stages.filter((s) => s.id !== id));
         }
-
-        if (!projectData) {
-            alert(
-                "Dados do projeto não encontrados. Por favor, comece novamente."
-            );
-            navigate(`/${user.role}/novo-projeto`);
-        }
-    }, [projectData, isEditing, navigate]);
-
-    const handleDeleteStep = (stepId) => {
-        setSteps(steps.filter((step) => step.id !== stepId));
     };
 
-    const handleFinalizeProject = async () => {
-        if (isEditing) {
-            const updatedProject = { ...projectData, steps: steps };
+    // Lógica de Drag and Drop
+    const onDragEnd = (result) => {
+        if (!result.destination) return;
+        const items = Array.from(stages);
+        const [reorderedItem] = items.splice(result.source.index, 1);
+        items.splice(result.destination.index, 0, reorderedItem);
+
+        // Atualiza a ordem
+        setStages(items.map((item, index) => ({ ...item, order: index + 1 })));
+    };
+
+    // NOVO: Função para o botão "Voltar"
+    const handleBack = () => {
+        // Se temos um projectId, estamos em modo de EDIÇÃO
+        if (projectId) {
+            navigate(`/employee/projeto/${projectId}/editar`, {
+                state: { projectData: projectInfo },
+            });
+        } else {
+            // Senão, estamos em modo de CRIAÇÃO
+            navigate("/employee/novo-projeto", {
+                state: { projectData: projectInfo },
+            });
+        }
+    };
+
+    const handleFinalSubmit = async () => {
+        if (projectId) {
+            // Modo Edição
+            const changes = {
+                stages: stages
+                    .map((s) => {
+                        const original = initialStages.find(
+                            (is) => is.id === s.id
+                        );
+                        // Se a etapa é nova (não tem ID original)
+                        if (!original) {
+                            const { id, ...newStageData } = s; // Remove o ID temporário
+                            return newStageData;
+                        }
+                        // Se a etapa mudou
+                        if (JSON.stringify(s) !== JSON.stringify(original)) {
+                            return {
+                                id: s.id,
+                                name: s.name,
+                                description: s.description,
+                                order: s.order,
+                                requiresDocument: s.requiresDocument,
+                            };
+                        }
+                        return null; // Etapa não mudou
+                    })
+                    .filter(Boolean), // Remove nulos
+            };
+
+            // Adiciona etapas removidas para deleção (lógica a ser implementada no backend se necessário)
+
             try {
-                await updateProject(projectData.id, {
-                    steps: updatedProject.steps,
-                });
+                await updateProject(projectId, changes);
                 alert("Projeto atualizado com sucesso!");
-                navigate(`/${user.role}/projeto/${projectData.id}`); // Volta para a página do projeto
+                navigate(`/employee/projeto/${projectId}`);
             } catch (error) {
                 alert("Erro ao atualizar o projeto.");
             }
         } else {
-            const finalProject = {
-                ...projectData,
-                clientId: parseInt(projectData.clientId, 10),
-                employeeId: parseInt(user.id, 10),
-                status: "Em Andamento",
-                activeStepIndex: 0,
-                steps: steps,
+            // Modo Criação
+            const payload = {
+                ...projectInfo,
+                clientID: `persons/${projectInfo.clientID}`,
+                employeeID: `users/${projectInfo.employeeID}`,
+                stages: stages.map(({ id, ...rest }) => rest), // Remove IDs temporários
             };
 
-            console.log("Enviando para a API:", finalProject);
-            // const createdProject = await createProject(finalProject); // Linha a ser usada com a API real
+            console.log("Enviando payload para criar projeto:", payload);
+
             try {
-                // 3. Chame a função da API
-                await createProject(finalProject);
+                const newProject = await createProject(payload);
                 alert("Projeto criado com sucesso!");
-                navigate(`/${user.role}/inicio`);
+                navigate(`/employee/inicio`);
             } catch (error) {
-                alert("Ocorreu um erro ao criar o projeto.");
+                console.error("Detalhes do erro:", error);
+                const errorMessage =
+                    error.response?.data?.message || "Erro ao criar projeto.";
+                alert(errorMessage);
             }
         }
     };
 
-    const handleOnDragEnd = (result) => {
-        if (!result.destination) return;
-        const items = Array.from(steps);
-        const [reorderedItem] = items.splice(result.source.index, 1);
-        items.splice(result.destination.index, 0, reorderedItem);
-        setSteps(items);
-    };
-
     return (
         <PageWrapper>
-            <FormContainer>
-                <h2>
-                    {editingStepId ? "Editar Etapa" : "Adicionar Nova Etapa"}
-                </h2>
-                <form onSubmit={handleStepSubmit}>
-                    <div
-                        style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "16px",
-                            marginTop: "16px",
-                        }}
-                    >
-                        <input
-                            type="text"
-                            placeholder="Nome da Etapa"
+            <Title>
+                {projectId
+                    ? "Editar Etapas do Projeto"
+                    : "Adicionar Etapas ao Projeto"}
+            </Title>
+            <ContentWrapper>
+                <FormSection>
+                    <SectionTitle>
+                        {editingStepId ? "Editando Etapa" : "Nova Etapa"}
+                    </SectionTitle>
+                    <FormGroup>
+                        <Label>Nome da Etapa</Label>
+                        <Input
+                            name="name"
                             value={currentStep.name}
-                            onChange={(e) =>
-                                setCurrentStep({
-                                    ...currentStep,
-                                    name: e.target.value,
-                                })
-                            }
-                            style={{ padding: "12px" }}
-                            required
+                            onChange={handleStepChange}
                         />
-                        <textarea
-                            placeholder="Descrição da Etapa"
+                    </FormGroup>
+                    <FormGroup>
+                        <Label>Descrição</Label>
+                        <Textarea
+                            name="description"
                             value={currentStep.description}
-                            onChange={(e) =>
-                                setCurrentStep({
-                                    ...currentStep,
-                                    description: e.target.value,
-                                })
-                            }
-                            style={{ padding: "12px", minHeight: "80px" }}
+                            onChange={handleStepChange}
                         />
-
-                        <div
-                            style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "10px",
-                                marginTop: "16px",
-                            }}
-                        >
+                    </FormGroup>
+                    <FormGroup>
+                        <label>
                             <input
                                 type="checkbox"
-                                id="requiresDocuments"
-                                checked={currentStep.requiresDocuments}
-                                onChange={(e) =>
-                                    setCurrentStep({
-                                        ...currentStep,
-                                        requiresDocuments: e.target.checked,
-                                    })
-                                }
+                                name="requiresDocument"
+                                checked={currentStep.requiresDocument}
+                                onChange={handleStepChange}
                             />
-                            <label htmlFor="requiresDocuments">
-                                Esta etapa exige envio de documentos?
-                            </label>
-                        </div>
-
-                        <button
-                            type="submit"
-                            style={{
-                                padding: "10px",
-                                backgroundColor: "#28a745",
-                                color: "white",
-                                fontWeight: "bold",
-                                borderRadius: "4px",
-                                marginTop: "16px",
-                            }}
-                        >
-                            {editingStepId
-                                ? "Atualizar Etapa"
-                                : "Adicionar Etapa"}
-                        </button>
-                    </div>
-                </form>
-                <ButtonsContainer>
-                    <Button
-                        onClick={() =>
-                            // navigate("/funcionario/novo-projeto", {
-                            //     state: { projectData },
-                            // })
-                            navigate(-1)
-                        }
-                    >
-                        Voltar
+                            Exige Documentos?
+                        </label>
+                    </FormGroup>
+                    <Button onClick={handleAddOrUpdateStep}>
+                        {editingStepId
+                            ? "Salvar Alterações na Etapa"
+                            : "Adicionar Etapa à Lista"}
                     </Button>
-                    <Button primary onClick={handleFinalizeProject}>
-                        {isEditing ? "Salvar Alterações" : "Criar Projeto"}
-                    </Button>
-                </ButtonsContainer>
-            </FormContainer>
+                </FormSection>
 
-            <StepsContainer>
-                <h2>Etapas do Projeto</h2>
-                {/* 3. Envolva a lista com os componentes */}
-                <DragDropContext onDragEnd={handleOnDragEnd}>
-                    <Droppable droppableId="steps">
-                        {(provided) => (
-                            <div
-                                {...provided.droppableProps}
-                                ref={provided.innerRef}
-                            >
-                                {steps.map((step, index) => (
-                                    <Draggable
-                                        key={step.id}
-                                        draggableId={String(step.id)}
-                                        index={index}
-                                    >
-                                        {(provided) => (
-                                            <div
-                                                ref={provided.innerRef}
-                                                {...provided.draggableProps}
-                                                {...provided.dragHandleProps}
-                                            >
-                                                <StepCard>
-                                                    <span>{step.name}</span>
-                                                    <StepActions>
-                                                        <FaPen
-                                                            onClick={() =>
-                                                                handleEditStep(
-                                                                    step
-                                                                )
-                                                            }
-                                                        />
-                                                        <FaTrash
-                                                            onClick={() =>
-                                                                handleDeleteStep(
-                                                                    step.id
-                                                                )
-                                                            }
-                                                        />
-                                                    </StepActions>
-                                                </StepCard>
-                                            </div>
-                                        )}
-                                    </Draggable>
-                                ))}
-                                {provided.placeholder}
-                            </div>
-                        )}
-                    </Droppable>
-                </DragDropContext>
-            </StepsContainer>
+                <StepsListSection>
+                    <SectionTitle>Ordem das Etapas</SectionTitle>
+                    <DragDropContext onDragEnd={onDragEnd}>
+                        <Droppable droppableId="steps">
+                            {(provided) => (
+                                <div
+                                    {...provided.droppableProps}
+                                    ref={provided.innerRef}
+                                >
+                                    {stages.map((step, index) => (
+                                        <Draggable
+                                            key={step.id}
+                                            draggableId={String(step.id)}
+                                            index={index}
+                                        >
+                                            {(provided) => (
+                                                <div
+                                                    ref={provided.innerRef}
+                                                    {...provided.draggableProps}
+                                                    {...provided.dragHandleProps}
+                                                >
+                                                    <StepCard>
+                                                        <span>
+                                                            {step.order}.{" "}
+                                                            {step.name}
+                                                        </span>
+                                                        <StepActions>
+                                                            <FaEdit
+                                                                onClick={() =>
+                                                                    handleEditStep(
+                                                                        step
+                                                                    )
+                                                                }
+                                                                style={{
+                                                                    cursor: "pointer",
+                                                                }}
+                                                            />
+                                                            <FaTrash
+                                                                onClick={() =>
+                                                                    handleRemoveStep(
+                                                                        step.id
+                                                                    )
+                                                                }
+                                                                style={{
+                                                                    cursor: "pointer",
+                                                                }}
+                                                            />
+                                                        </StepActions>
+                                                    </StepCard>
+                                                </div>
+                                            )}
+                                        </Draggable>
+                                    ))}
+                                    {provided.placeholder}
+                                </div>
+                            )}
+                        </Droppable>
+                    </DragDropContext>
+                </StepsListSection>
+            </ContentWrapper>
+            <ButtonContainer>
+                {/* NOVO: Botão voltar com a nova funcionalidade */}
+                <BackButton onClick={handleBack}>Voltar</BackButton>
+                <SubmitButton onClick={handleFinalSubmit}>
+                    {projectId
+                        ? "Salvar Alterações no Projeto"
+                        : "Criar Projeto"}
+                </SubmitButton>
+            </ButtonContainer>
         </PageWrapper>
     );
 };

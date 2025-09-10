@@ -6,6 +6,7 @@ import Topbar from "../../components/layout/Topbar";
 import HomePage from "./HomePage";
 import CreateProjectPage from "./CreateProjectPage";
 import StepsPage from "./StepsPage";
+import EditProjectPage from "./EditProjectPage";
 import SearchPage from "./SearchPage";
 import ProjectPage from "./ProjectPage";
 import ProfilePage from "./ProfilePage";
@@ -53,6 +54,14 @@ const EmployeeLayout = () => {
                         <Route
                             path="projeto/:projectId"
                             element={<ProjectPage />}
+                        />
+                        <Route
+                            path="projeto/:projectId/editar"
+                            element={<EditProjectPage />}
+                        />
+                        <Route
+                            path="projeto/:projectId/editar-etapas"
+                            element={<StepsPage />}
                         />
                         <Route
                             path="projeto/:projectId/etapa/:etapaId/documentos"

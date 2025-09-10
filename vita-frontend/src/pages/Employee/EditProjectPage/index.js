@@ -1,19 +1,19 @@
-// Caminho: vita-frontend/src/pages/Employee/CreateProjectPage/index.js
+// Caminho: vita-frontend/src/pages/Employee/EditProjectPage/index.js
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { getAllPeople } from "../../../services/peopleService";
-import { useAuth } from "../../../contexts/AuthContext";
+import { getProjectById } from "../../../services/projectService";
 import { getDisplayName } from "../../../utils/peopleUtils";
 
-// --- Styled Components (Preservando seu estilo) ---
+// --- Styled Components (Preservados) ---
 const PageWrapper = styled.div`
     max-width: 900px;
     margin: 0 auto;
     padding: 24px;
 `;
-
+// ... (demais styled-components mantidos)
 const Title = styled.h1`
     color: ${({ theme }) => theme.colors.primary};
     margin-bottom: 32px;
@@ -68,56 +68,76 @@ const Textarea = styled.textarea`
 const ButtonContainer = styled.div`
     grid-column: 1 / -1;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     margin-top: 16px;
 `;
 
-const SubmitButton = styled.button`
+const Button = styled.button`
     padding: 12px 24px;
     border-radius: 4px;
     border: none;
-    background-color: ${({ theme }) => theme.colors.primary};
-    color: white;
     font-weight: bold;
     cursor: pointer;
 `;
 
+const BackButton = styled(Button)`
+    background-color: #f1f1f1;
+`;
+
+const SubmitButton = styled(Button)`
+    background-color: ${({ theme }) => theme.colors.primary};
+    color: white;
+`;
+
+// --- Helpers ---
+const stripRef = (ref) => {
+    if (!ref || typeof ref !== "string") return null;
+    return ref.includes("/") ? ref.split("/").pop() : ref;
+};
+
+const formatDateForInput = (dateString) => {
+    if (!dateString) return "";
+    const d = new Date(dateString); // o JS entende essa string como data
+    if (isNaN(d)) return ""; // proteção caso não dê pra parsear
+    return d.toISOString().split("T")[0]; // "2025-09-09"
+};
+
 // --- Componente ---
-const CreateProjectPage = () => {
+const EditProjectPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth(); // Para associar o funcionário logado
+    const { projectId } = useParams();
 
-    const [projectData, setProjectData] = useState(
-        location.state?.projectData || {
-            name: "",
-            clientID: "",
-            employeeID: user?.id || "",
-            startDate: "",
-            expectedEndDate: "",
-            description: "",
-        }
-    );
-
+    const [projectData, setProjectData] = useState(null);
     const [people, setPeople] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchPeople = async () => {
+        const fetchInitialData = async () => {
             try {
+                // Prioriza os dados que vieram da StepsPage
+                if (location.state?.projectData) {
+                    setProjectData(location.state.projectData);
+                } else {
+                    const data = await getProjectById(projectId);
+                    setProjectData({
+                        ...data.project,
+                        clientID: stripRef(data.project.clientID),
+                        employeeID: stripRef(data.project.employeeID),
+                    });
+                }
+
                 const peopleData = await getAllPeople();
                 setPeople(peopleData || []);
             } catch (error) {
-                console.error("Erro ao buscar pessoas:", error);
-                alert(
-                    "Não foi possível carregar a lista de clientes e funcionários."
-                );
+                console.error("Erro ao carregar dados:", error);
+                alert("Erro ao carregar dados para edição.");
             } finally {
                 setLoading(false);
             }
         };
-        fetchPeople();
-    }, []);
+        fetchInitialData();
+    }, [projectId, location.state]);
 
     const { clients, employees } = useMemo(() => {
         const clients = people.filter(
@@ -136,17 +156,18 @@ const CreateProjectPage = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // Passa os dados do projeto para a próxima página (StepsPage)
-        navigate("/employee/novo-projeto/etapas", { state: { projectData } });
+        navigate(`/employee/projeto/${projectId}/editar-etapas`, {
+            state: { projectData },
+        });
     };
 
-    if (loading) {
+    if (loading || !projectData) {
         return <p>Carregando...</p>;
     }
 
     return (
         <PageWrapper>
-            <Title>Novo Projeto</Title>
+            <Title>Editar Projeto</Title>
             <Form onSubmit={handleSubmit}>
                 <FormGroup>
                     <Label htmlFor="name">Nome do Projeto</Label>
@@ -182,11 +203,12 @@ const CreateProjectPage = () => {
 
                 <FormGroup>
                     <Label htmlFor="startDate">Data de Início</Label>
+                    {/* CORREÇÃO: Formata a data para o input */}
                     <Input
                         id="startDate"
                         name="startDate"
                         type="date"
-                        value={projectData.startDate}
+                        value={projectData.startDate?.split("T")[0] || ""}
                         onChange={handleChange}
                         required
                     />
@@ -196,11 +218,12 @@ const CreateProjectPage = () => {
                     <Label htmlFor="expectedEndDate">
                         Data de Término (Prevista)
                     </Label>
+                    {/* CORREÇÃO: Formata a data para o input */}
                     <Input
                         id="expectedEndDate"
                         name="expectedEndDate"
                         type="date"
-                        value={projectData.expectedEndDate}
+                        value={projectData.expectedEndDate?.split("T")[0] || ""}
                         onChange={handleChange}
                     />
                 </FormGroup>
@@ -216,8 +239,16 @@ const CreateProjectPage = () => {
                 </FormGroup>
 
                 <ButtonContainer>
+                    <BackButton
+                        type="button"
+                        onClick={() =>
+                            navigate(`/employee/projeto/${projectId}`)
+                        }
+                    >
+                        Cancelar
+                    </BackButton>
                     <SubmitButton type="submit">
-                        Avançar para Etapas
+                        Avançar para Editar Etapas
                     </SubmitButton>
                 </ButtonContainer>
             </Form>
@@ -225,4 +256,4 @@ const CreateProjectPage = () => {
     );
 };
 
-export default CreateProjectPage;
+export default EditProjectPage;
