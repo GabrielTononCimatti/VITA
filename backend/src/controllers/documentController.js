@@ -1,6 +1,6 @@
 import {db, bucket, firestore} from '../config/firebaseConfig.js';
 import {retrieveProject,} from "../models/projectModel.js";
-import {retrieveUserQuery} from "../models/userModel.js";
+import {retrieveUser, retrieveUserQuery} from "../models/userModel.js";
 import {saveNotification} from "../models/notificationModel.js";
 import {
     deleteDocument,
@@ -9,7 +9,8 @@ import {
     validateDocument,
     validateLink
 } from "../models/documentModel.js";
-import {isAdmin, isOnProject} from "../utils/permissions.js";
+import {isAdmin, isClient, isEmployee, isOnProject} from "../utils/permissions.js";
+import {retrievePerson} from "../models/personModel.js";
 
 export const getAllDocuments = async (req, res) =>
 {
@@ -35,6 +36,21 @@ export const getAllDocuments = async (req, res) =>
         console.log("\n\n"+"Nenhum documento encontrado"+"\n\n");
         return res.status(400).send({message:"Nenhum documento encontrado"});
     }
+    for(let i=0; i<documents.length; i++)
+    {
+
+        let user = await retrieveUser(documents[i].userID.split("/")[1]);
+
+        let person = await retrievePerson(user.personID.split("/")[1]);
+        let name;
+        if(person.personType === "PJ")
+            name = person.tradeName;
+        else
+            name = person.name;
+
+        documents[i].createdBy = name;
+    }
+
 
     return res.status(200).send(documents);
 };
@@ -92,7 +108,25 @@ export const getDocumentByStage = async (req, res) =>
     }
 
 
-    return res.status(200).send(document);
+    for(let i=0; i<document.length; i++)
+    {
+
+        let user = await retrieveUser(document[i].userID.split("/")[1]);
+
+        let person = await retrievePerson(user.personID.split("/")[1]);
+        let name;
+        if(person.personType === "PJ")
+            name = person.tradeName;
+        else
+            name = person.name;
+
+        document[i].createdBy = name;
+    }
+
+
+
+
+    return res.status(200).send({document});
 }
 
 
@@ -136,6 +170,19 @@ export const getDocumentById = async (req, res) =>
         console.log("\n\n"+"Erro 403: Forbidden. Acesso negado"+"\n\n");
         return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
     }
+
+
+    let user = await retrieveUser(document.userID.split("/")[1]);
+
+    let person = await retrievePerson(user.personID.split("/")[1]);
+    let name;
+    if(person.personType === "PJ")
+        name = person.tradeName;
+    else
+        name = person.name;
+
+    document.createdBy = name;
+
 
 
     return res.status(200).send(document);
