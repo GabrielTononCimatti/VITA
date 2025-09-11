@@ -33,7 +33,7 @@ export const getAllDocuments = async (req, res) =>
     if(documents.length === 0)
     {
         console.log("\n\n"+"Nenhum documento encontrado"+"\n\n");
-        return res.status(400).send({message:"Nenhum documento encontrado".message});
+        return res.status(400).send({message:"Nenhum documento encontrado"});
     }
 
     return res.status(200).send(documents);
@@ -57,7 +57,7 @@ export const getDocumentByStage = async (req, res) =>
     if(!project)
     {
         console.log("\n\n"+"Nenhum projeto encontrado"+"\n\n");
-        return res.status(400).send({message:"Nenhum projeto encontrado".message});
+        return res.status(400).send({message:"Nenhum projeto encontrado"});
     }
 
 
@@ -88,7 +88,7 @@ export const getDocumentByStage = async (req, res) =>
     if(document.length === 0)
     {
         console.log("\n\n"+"Nenhum documento encontrado"+"\n\n");
-        return res.status(400).send({message:"Nenhum documento encontrado".message});
+        return res.status(400).send({message:"Nenhum documento encontrado"});
     }
 
 
@@ -113,7 +113,7 @@ export const getDocumentById = async (req, res) =>
     if(!document)
     {
         console.log("\n\n"+"Nenhum documento encontrado"+"\n\n");
-        return res.status(400).send({message:"Nenhum documento encontrado".message});
+        return res.status(400).send({message:"Nenhum documento encontrado"});
     }
 
 
