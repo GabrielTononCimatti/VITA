@@ -10,6 +10,7 @@ import {personToUserType} from '../utils/dbUtils.js';
 import {auth, firestore} from "../config/firebaseConfig.js";
 import {deleteUser, retrieveUserQuery, saveUser} from "../models/userModel.js";
 import {isAdmin, isEmployee} from "../utils/permissions.js";
+import {saveNotification} from "../models/notificationModel.js";
 
 export const getPerson = async (req, res) =>
 {
@@ -38,7 +39,7 @@ export const getPerson = async (req, res) =>
 
 
     return res.status(200).send(persons);
-};
+}
 
 export const getPersonById = async (req, res) =>
 {
@@ -114,7 +115,7 @@ export const postPerson = async (req, res) =>
 
     return res.status(201).send({ message: `Pessoa criada com sucesso, use POST localhost:5000/user/register/${preUserID}`, userID: preUserID});
 
-};
+}
 
 export const requestChanges = async (req, res) =>
 {
@@ -211,7 +212,7 @@ export const putPerson = async (req, res) =>
     }
 
     return res.status(200).send({message: "Dados da pessoa editados com sucesso"});
-};
+}
 
 
 export const deletePersonById = async (req, res) =>
@@ -252,4 +253,4 @@ export const deletePersonById = async (req, res) =>
     }
 
     return res.status(200).send({message: "Pessoa deletada com sucesso"});
-};
+}

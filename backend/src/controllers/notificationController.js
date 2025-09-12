@@ -190,7 +190,7 @@ export const deleteNotificationById = async (req, res) =>
     }
 
     return res.status(200).send({message: "Notificação removida com sucesso"});
-};
+}
 
 
 export const readNotification = async (req, res) =>

@@ -53,7 +53,7 @@ export const getAllDocuments = async (req, res) =>
 
 
     return res.status(200).send(documents);
-};
+}
 
 
 export const getDocumentByStage = async (req, res) =>
@@ -300,7 +300,7 @@ export const postDocument = async (req, res) =>
         console.log("\n\n"+error+"\n\n");
         return res.status(400).send({message:error.message});
     }
-};
+}
 
 export const postLink = async (req, res) =>
 {
@@ -454,4 +454,4 @@ export const deleteDocumentById = async (req, res) =>
     }
 
     return res.status(200).send({message: "Documento removido com sucesso"});
-};
+}

@@ -114,7 +114,7 @@ export const getProject = async (req, res) =>
 
 
     return res.status(200).send(resultados);
-};
+}
 
 export const getProjectById = async (req, res) =>
 {
@@ -263,7 +263,7 @@ export const postProject = async (req, res) =>
     }
 
     return res.status(201).send({message: "Projeto criado com sucesso"});
-};
+}
 
 
 export const putProject = async (req, res) =>
@@ -334,7 +334,7 @@ export const putProject = async (req, res) =>
 
 
     return res.status(200).send({message: "Projeto atualizado com sucesso"});
-};
+}
 
 
 export const deleteProjectById = async (req, res) =>
@@ -400,7 +400,7 @@ export const deleteProjectById = async (req, res) =>
     }
 
     return res.status(200).send({message: "Projeto removido com sucesso"});
-};
+}
 
 
 export const deleteStageById = async (req, res) =>

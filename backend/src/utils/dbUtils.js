@@ -5,14 +5,14 @@ export const docToObject = (doc) =>
     if(!doc.exists)
         return null;
     return {id: doc.id, ...doc.data()};
-};
+}
 
 export const snapshotToArray = (snapshot) =>
 {
     if(!snapshot || !snapshot.docs)
         return [];
     return snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
-};
+}
 
 export const personToUserType = (personType) =>
 {

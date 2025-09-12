@@ -29,7 +29,7 @@ export const getUser = async (req, res) =>
     }
 
     return res.status(200).send(users);
-};
+}
 
 
 export const getUserById = async (req, res) =>
@@ -64,7 +64,7 @@ export const getUserById = async (req, res) =>
 export const login = async (req, res) =>
 {
     return res.status(200).send({ message: 'Login bem-sucedido!', currentUser: req.currentUser, currentPerson: req.currentPerson});
-};
+}
 
 
 export const register = async (req, res) =>
@@ -130,7 +130,7 @@ export const register = async (req, res) =>
 
 
     return res.status(201).send({message: "Cadastro finalizado com sucesso"});
-};
+}
 
 
 
@@ -243,7 +243,7 @@ export const putUser = async (req, res) =>
 
 
     return res.status(200).send({message: "Dados do usuário editados com sucesso."});
-};
+}
 
 
 export const deleteUserById = async (req, res) =>
@@ -278,4 +278,4 @@ export const deleteUserById = async (req, res) =>
     }
 
     return res.status(200).send({message: "Usuário deletado com sucesso"});
-};
+}
