@@ -116,6 +116,80 @@ export const postPerson = async (req, res) =>
 
 };
 
+export const requestChanges = async (req, res) =>
+{
+    let customMessage, admins;
+
+
+    try
+    {
+        admins = await retrieveUserQuery({fieldName: "userType", condition: "==", fieldValue: "A"})
+    }
+    catch(error)
+    {
+        console.log("\n\n"+error+"\n\n");
+        return res.status(400).send({message:error.message});
+    }
+
+    if(admins.length === 0)
+    {
+        return res.status(400).send({message:"Nenhum admin encontrado no sistema"});
+    }
+
+    customMessage = "O usuário "+req.currentPerson.name+" de id "+req.currentPerson.id+" solicitou a alteração dos seguintes dados:";
+
+    let dados = req.body;
+    let fieldNames = Object.keys(dados)
+    let fieldNamesTraduzidos = [...fieldNames];
+
+    for(let i=0; i<fieldNamesTraduzidos.length; i++){
+        if(fieldNames[i] === "cnpj")
+            fieldNamesTraduzidos[i]="CNPJ";
+
+        if(fieldNames[i] === "companyName")
+            fieldNamesTraduzidos[i]="Razão Social";
+
+        if(fieldNames[i] === "phoneNumber")
+            fieldNamesTraduzidos[i]="Número de telefone";
+
+        if(fieldNames[i] === "tradeName")
+            fieldNamesTraduzidos[i]="Nome Fantasia";
+
+        if(fieldNames[i] === "cpf")
+            fieldNamesTraduzidos[i]="CPF";
+
+        if(fieldNames[i] === "name")
+            fieldNamesTraduzidos[i]="Nome";
+        console.log(fieldNames[i])
+        console.log(fieldNamesTraduzidos[i])
+    }
+
+    for(let i=0; i<fieldNamesTraduzidos.length; i++){
+        customMessage = customMessage+"\n"+fieldNamesTraduzidos[i]+": "+dados[fieldNames[i]];
+    }
+
+
+
+    let notification =
+        {
+            createdAt: firestore.FieldValue.serverTimestamp(),
+            message: customMessage,
+            projectID: null,
+            read: false,
+            senderID: "users/"+req.currentUser.id,
+            stageID: null,
+            subject: "Solitação para mudança de dados"
+        }
+
+    for(let i = 0; i < admins.length; i++)
+    {
+        notification.receiverID = "users/"+admins[i].id;
+        saveNotification(notification);
+    }
+
+    return res.status(200).send({message: "Solitação para mudança de dados enviada com sucesso"});
+}
+
 export const putPerson = async (req, res) =>
 {
     if(!isAdmin(req.currentUser))
