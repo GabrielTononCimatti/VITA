@@ -198,11 +198,27 @@ export const postProject = async (req, res) =>
 
     const project = req.body;
 
+    project.status="Em andamento";
+    if(project.expectedEndDate)
+    {
+
+        const inputDate = new Date(project.expectedEndDate);
+        const now = new Date();
+
+
+        if(inputDate.getTime() <= now.getTime())
+        {
+            project.status="Em atraso";
+        }
+
+    }
+
+
+
     project.startDate = firestore.FieldValue.serverTimestamp();
     project.endDate=null;
     project.expectedEndDate=ISOToFirestore(project.expectedEndDate);
     project.employeeID="users/"+req.currentUser.id;
-    project.status="Em andamento";
 
     if(!project.stages || !Array.isArray(project.stages))
     {
@@ -293,6 +309,21 @@ export const putProject = async (req, res) =>
     }
 
     const project = req.body;
+    if(project.expectedEndDate)
+    {
+
+        const inputDate = new Date(project.expectedEndDate); // Parse ISO date string
+        const now = new Date();
+
+        if(project.status !== "Finalizado") {
+            if (inputDate.getTime() <= now.getTime()) {
+                project.status = "Em atraso";
+            } else {
+                project.status = "Em andamento";
+            }
+        }
+
+    }
     if(project.expectedEndDate)
         project.expectedEndDate=ISOToFirestore(project.expectedEndDate);
 
