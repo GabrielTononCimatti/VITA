@@ -238,7 +238,8 @@ export const postDocument = async (req, res) =>
             document.description = null;
         document.createdAt = firestore.FieldValue.serverTimestamp();
         document.fileSize = req.file.size;
-        document.name = req.file.originalname;
+        if(!document.name)
+            document.name = req.file.originalname;
         document.url = publicUrl;
         document.userID = "users/"+req.currentUser.id;
         validateDocument(document, true);
