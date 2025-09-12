@@ -354,3 +354,23 @@ export const returnProjectStage = async (id) => {
         throw error;
     }
 };
+
+/**
+ * Deleta uma etapa específica de um projeto.
+ * @param {string} projectId - O ID do projeto.
+ * @param {string} stageId - O ID da etapa a ser deletada.
+ */
+export const deleteProjectStage = async (projectId, stageId) => {
+    try {
+        const response = await api.delete(
+            `/project/${projectId}/stage/${stageId}`
+        );
+        return response.data;
+    } catch (error) {
+        console.error(
+            `Erro ao deletar a etapa ${stageId} do projeto ${projectId}:`,
+            error
+        );
+        throw error;
+    }
+};

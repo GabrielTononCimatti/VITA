@@ -1,59 +1,74 @@
+// Caminho: vita-frontend/src/services/notificationService.js
+
 import api from "./api";
 
 /**
- * Busca todas as notificações para um usuário específico.
- * @param {number} userId O ID do usuário logado.
- * @returns {Promise<Array>} Lista de notificações, ordenadas das mais novas para as mais antigas.
+ * Busca todas as notificações recebidas pelo usuário logado.
  */
-export const getNotificationsForUser = async (userId) => {
+export const getReceivedNotifications = async () => {
     try {
-        // Busca notificações para o usuário e ordena pela data de criação
-        const response = await api.get(
-            `/notifications?userId=${userId}&_sort=createdAt&_order=desc`
-        );
+        const response = await api.get("/notification/received");
         return response.data;
     } catch (error) {
-        console.error("Erro ao buscar notificações:", error);
-        return [];
+        console.error("Erro ao buscar notificações recebidas:", error);
+        throw error;
+    }
+};
+
+/**
+ * Busca todas as notificações enviadas pelo usuário logado.
+ */
+export const getSentNotifications = async () => {
+    try {
+        const response = await api.get("/notification/sended");
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao buscar notificações enviadas:", error);
+        throw error;
     }
 };
 
 /**
  * Marca uma notificação específica como lida.
- * @param {number} notificationId O ID da notificação.
- * @returns {Promise<object>} A notificação atualizada.
+ * @param {string} notificationId - O ID da notificação.
  */
-export const markNotificationAsRead = (notificationId) => {
-    return api.patch(`/notifications/${notificationId}`, { read: true });
-};
-
-/**
- * Cria uma nova notificação no sistema.
- * @param {object} notificationData O objeto da notificação.
- * @returns {Promise<object>} A notificação criada.
- */
-export const createNotification = (notificationData) => {
-    const dataWithTimestamp = {
-        ...notificationData,
-        read: false,
-        createdAt: new Date().toISOString(),
-    };
-    return api.post("/notifications", dataWithTimestamp);
-};
-
-/**
- * Busca todas as notificações para um projeto específico.
- * @param {string} projectId O ID do projeto.
- * @returns {Promise<Array>} Lista de notificações do projeto.
- */
-export const getNotificationsForProject = async (projectId) => {
+export const markAsRead = async (notificationId) => {
     try {
-        const response = await api.get(
-            `/notifications?projectId=${projectId}&_sort=createdAt&_order=desc`
-        );
+        const response = await api.put(`/notification/read/${notificationId}`);
         return response.data;
     } catch (error) {
-        console.error("Erro ao buscar notificações do projeto:", error);
-        return [];
+        console.error(
+            `Erro ao marcar notificação ${notificationId} como lida:`,
+            error
+        );
+        throw error;
+    }
+};
+
+/**
+ * Deleta uma notificação específica.
+ * @param {string} notificationId - O ID da notificação.
+ */
+export const deleteNotification = async (notificationId) => {
+    try {
+        const response = await api.delete(`/notification/${notificationId}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Erro ao deletar notificação ${notificationId}:`, error);
+        throw error;
+    }
+};
+
+export const markAllAsRead = async () => {
+    try {
+        // Esta função chama o novo endpoint do backend
+        const response = await api.put("/notification/read/all");
+        return response.data;
+    } catch (error) {
+        console.error(
+            "Erro ao marcar todas as notificações como lidas:",
+            error
+        );
+        throw error;
     }
 };

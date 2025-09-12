@@ -4,8 +4,12 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { getAllPeople } from "../../../services/peopleService";
-import { getProjectById } from "../../../services/projectService";
+import {
+    getProjectById,
+    updateProject,
+} from "../../../services/projectService";
 import { getDisplayName } from "../../../utils/peopleUtils";
+import _ from "lodash"; // Biblioteca para comparar objetos
 
 // --- Styled Components (Preservados) ---
 const PageWrapper = styled.div`
@@ -95,49 +99,69 @@ const stripRef = (ref) => {
     return ref.includes("/") ? ref.split("/").pop() : ref;
 };
 
-const formatDateForInput = (dateString) => {
-    if (!dateString) return "";
-    const d = new Date(dateString); // o JS entende essa string como data
-    if (isNaN(d)) return ""; // proteção caso não dê pra parsear
-    return d.toISOString().split("T")[0]; // "2025-09-09"
-};
-
 // --- Componente ---
 const EditProjectPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { projectId } = useParams();
 
+    const [initialData, setInitialData] = useState(null);
     const [projectData, setProjectData] = useState(null);
     const [people, setPeople] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // useEffect(() => {
+    //     const fetchInitialData = async () => {
+    //         try {
+    //             // Prioriza os dados que vieram da StepsPage
+    //             if (location.state?.projectData) {
+    //                 setProjectData(location.state.projectData);
+    //             } else {
+    //                 const data = await getProjectById(projectId);
+    //                 setProjectData({
+    //                     ...data.project,
+    //                     clientID: stripRef(data.project.clientID),
+    //                     employeeID: stripRef(data.project.employeeID),
+    //                 });
+    //                 setStagesData(data.project.stages);
+    //             }
+
+    //             const peopleData = await getAllPeople();
+    //             setPeople(peopleData || []);
+    //         } catch (error) {
+    //             console.error("Erro ao carregar dados:", error);
+    //             alert("Erro ao carregar dados para edição.");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+    //     fetchInitialData();
+    // }, [projectId]);
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
-                // Prioriza os dados que vieram da StepsPage
-                if (location.state?.projectData) {
-                    setProjectData(location.state.projectData);
-                } else {
-                    const data = await getProjectById(projectId);
-                    setProjectData({
-                        ...data.project,
-                        clientID: stripRef(data.project.clientID),
-                        employeeID: stripRef(data.project.employeeID),
-                    });
-                }
+                const [projectResponse, peopleData] = await Promise.all([
+                    getProjectById(projectId),
+                    getAllPeople(),
+                ]);
 
-                const peopleData = await getAllPeople();
+                const formattedData = {
+                    ...projectResponse.project,
+                    clientID: stripRef(projectResponse.project.clientID),
+                    employeeID: stripRef(projectResponse.project.employeeID),
+                };
+
+                setProjectData(formattedData);
+                setInitialData(formattedData); // Salva o estado original
                 setPeople(peopleData || []);
             } catch (error) {
-                console.error("Erro ao carregar dados:", error);
                 alert("Erro ao carregar dados para edição.");
             } finally {
                 setLoading(false);
             }
         };
         fetchInitialData();
-    }, [projectId, location.state]);
+    }, [projectId]);
 
     const { clients, employees } = useMemo(() => {
         const clients = people.filter(
@@ -154,11 +178,40 @@ const EditProjectPage = () => {
         setProjectData((prev) => ({ ...prev, [name]: value }));
     };
 
-    const handleSubmit = (e) => {
+    // const handleSubmit = (e) => {
+    //     e.preventDefault();
+    //     navigate(`/employee/projeto/${projectId}/editar-etapas`, {
+    //         state: { projectData, stagesData },
+    //     });
+    // };
+    const handleSaveChanges = async (e) => {
         e.preventDefault();
-        navigate(`/employee/projeto/${projectId}/editar-etapas`, {
-            state: { projectData },
+
+        const changes = {};
+        // Compara o estado atual com o inicial e pega apenas o que mudou
+        Object.keys(projectData).forEach((key) => {
+            if (!_.isEqual(projectData[key], initialData[key])) {
+                changes[key] = projectData[key];
+            }
         });
+
+        // Formata os IDs para o backend
+        if (changes.clientID) changes.clientID = `persons/${changes.clientID}`;
+        if (changes.employeeID)
+            changes.employeeID = `users/${changes.employeeID}`;
+
+        if (Object.keys(changes).length === 0) {
+            alert("Nenhuma alteração foi feita.");
+            return;
+        }
+
+        try {
+            await updateProject(projectId, changes);
+            alert("Projeto atualizado com sucesso!");
+            navigate(`/employee/projeto/${projectId}`);
+        } catch (error) {
+            alert("Falha ao atualizar o projeto.");
+        }
     };
 
     if (loading || !projectData) {
@@ -168,7 +221,7 @@ const EditProjectPage = () => {
     return (
         <PageWrapper>
             <Title>Editar Projeto</Title>
-            <Form onSubmit={handleSubmit}>
+            <Form onSubmit={handleSaveChanges}>
                 <FormGroup>
                     <Label htmlFor="name">Nome do Projeto</Label>
                     <Input
@@ -247,9 +300,7 @@ const EditProjectPage = () => {
                     >
                         Cancelar
                     </BackButton>
-                    <SubmitButton type="submit">
-                        Avançar para Editar Etapas
-                    </SubmitButton>
+                    <SubmitButton type="submit">Salvar Alterações</SubmitButton>
                 </ButtonContainer>
             </Form>
         </PageWrapper>

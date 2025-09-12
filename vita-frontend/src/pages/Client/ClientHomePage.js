@@ -7,6 +7,8 @@ import { getAllProjects } from "../../services/projectService";
 import { useAuth } from "../../contexts/AuthContext";
 import { getDisplayName } from "../../utils/peopleUtils";
 import StatCard from "../../components/cards/StatCard";
+import { FaBell } from "react-icons/fa";
+import ProjectNotificationsPanel from "../../components/layout/ProjectNotificationsPanel";
 
 // --- Styled Components (mantidos) ---
 const HomePageWrapper = styled.div`
@@ -85,6 +87,8 @@ const ClientHomePage = () => {
     const [allProjects, setAllProjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [selectedProject, setSelectedProject] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -125,6 +129,12 @@ const ClientHomePage = () => {
         );
     }, [clientProjects]);
 
+    const handleNotificationClick = (project, e) => {
+        e.stopPropagation();
+        setSelectedProject(project); // Passa o objeto do projeto para o painel
+        setIsPanelOpen(true);
+    };
+
     if (loading) return <div>Carregando...</div>;
     if (error) return <div style={{ color: "red" }}>{error}</div>;
 
@@ -156,6 +166,7 @@ const ClientHomePage = () => {
                             <th>Responsável (Vulcano)</th>
                             <th>Data de Início</th>
                             <th>Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -189,6 +200,21 @@ const ClientHomePage = () => {
                                             {item.project.status}
                                         </StatusBadge>
                                     </td>
+                                    <td
+                                        onClick={(e) =>
+                                            handleNotificationClick(
+                                                item.project,
+                                                e
+                                            )
+                                        }
+                                    >
+                                        <FaBell
+                                            style={{
+                                                cursor: "pointer",
+                                                fontSize: "18px",
+                                            }}
+                                        />
+                                    </td>
                                 </tr>
                             ))
                         ) : (
@@ -201,6 +227,14 @@ const ClientHomePage = () => {
                     </tbody>
                 </Table>
             </RecentProjects>
+            {selectedProject && (
+                <ProjectNotificationsPanel
+                    isOpen={isPanelOpen}
+                    onClose={() => setIsPanelOpen(false)}
+                    projectId={selectedProject.id}
+                    projectName={selectedProject.name}
+                />
+            )}
         </HomePageWrapper>
     );
 };

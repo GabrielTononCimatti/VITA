@@ -353,6 +353,16 @@ const ProjectPage = () => {
                             variant="secondary"
                             onClick={() =>
                                 navigate(
+                                    `/${user.role}/projeto/${projectId}/editar`
+                                )
+                            }
+                        >
+                            <FaEdit /> Editar Projeto
+                        </ActionButton>
+                        <ActionButton
+                            variant="secondary"
+                            onClick={() =>
+                                navigate(
                                     `/${user.role}/projeto/${projectId}/editar-etapas`
                                 )
                             }

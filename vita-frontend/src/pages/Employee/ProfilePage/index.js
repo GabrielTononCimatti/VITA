@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { useAuth } from "../../../contexts/AuthContext";
 import { updateUser } from "../../../services/userService";
 import { getAdmins } from "../../../services/peopleService"; // NOVO: Importa a função de buscar admins
-import { createNotification } from "../../../services/notificationService";
+// import { createNotification } from "../../../services/notificationService";
 
 // Reutilizando componentes de formulário da CreateProjectPage
 const FormWrapper = styled.div`
@@ -304,19 +304,19 @@ const ProfilePage = () => {
             user.id
         }) solicitou as seguintes alterações de perfil:\n${changes.join("\n")}`;
 
-        try {
-            // Envia notificação para cada administrador
-            for (const admin of admins) {
-                await createNotification({
-                    userId: admin.id,
-                    message,
-                    projectId: null,
-                });
-            }
-            alert("Sua solicitação de alteração foi enviada ao administrador!");
-        } catch (error) {
-            alert("Ocorreu um erro ao enviar a solicitação.");
-        }
+        // try {
+        //     // Envia notificação para cada administrador
+        //     for (const admin of admins) {
+        //         await createNotification({
+        //             userId: admin.id,
+        //             message,
+        //             projectId: null,
+        //         });
+        //     }
+        //     alert("Sua solicitação de alteração foi enviada ao administrador!");
+        // } catch (error) {
+        //     alert("Ocorreu um erro ao enviar a solicitação.");
+        // }
     };
 
     // NOVO: Função para salvar diretamente email e senha

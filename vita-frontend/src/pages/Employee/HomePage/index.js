@@ -7,6 +7,8 @@ import { getAllProjects } from "../../../services/projectService";
 import { getDisplayName } from "../../../utils/peopleUtils";
 import { useAuth } from "../../../contexts/AuthContext"; // Para pegar o funcionário logado
 import StatCard from "../../../components/cards/StatCard";
+import ProjectNotificationsPanel from "../../../components/layout/ProjectNotificationsPanel";
+import { FaBell } from "react-icons/fa";
 
 // --- Styled Components (Preservados) ---
 const HomePageWrapper = styled.div`
@@ -78,6 +80,8 @@ const HomePage = () => {
     const { user } = useAuth(); // Pega o usuário (funcionário) logado
     const [allProjects, setAllProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [selectedProject, setSelectedProject] = useState(null);
     const [error, setError] = useState("");
     const navigate = useNavigate();
 
@@ -133,6 +137,12 @@ const HomePage = () => {
             .slice(0, 5);
     }, [employeeProjects]);
 
+    const handleNotificationClick = (project, e) => {
+        e.stopPropagation();
+        setSelectedProject(project); // Passa o objeto do projeto para o painel
+        setIsPanelOpen(true);
+    };
+
     if (loading) return <div>Carregando...</div>;
     if (error) return <div style={{ color: "red" }}>{error}</div>;
 
@@ -165,6 +175,7 @@ const HomePage = () => {
                             <th>Cliente</th>
                             <th>Data de Início</th>
                             <th>Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -194,11 +205,31 @@ const HomePage = () => {
                                         {item.project.status}
                                     </StatusBadge>
                                 </td>
+                                <td
+                                    onClick={(e) =>
+                                        handleNotificationClick(item.project, e)
+                                    }
+                                >
+                                    <FaBell
+                                        style={{
+                                            cursor: "pointer",
+                                            fontSize: "18px",
+                                        }}
+                                    />
+                                </td>
                             </tr>
                         ))}
                     </tbody>
                 </Table>
             </RecentProjects>
+            {selectedProject && (
+                <ProjectNotificationsPanel
+                    isOpen={isPanelOpen}
+                    onClose={() => setIsPanelOpen(false)}
+                    projectId={selectedProject.id}
+                    projectName={selectedProject.name}
+                />
+            )}
         </HomePageWrapper>
     );
 };

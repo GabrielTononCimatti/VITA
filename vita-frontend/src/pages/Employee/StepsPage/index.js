@@ -8,6 +8,7 @@ import {
     createProject,
     getProjectById,
     updateProject,
+    deleteProjectStage,
 } from "../../../services/projectService";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
@@ -137,6 +138,8 @@ const StepsPage = () => {
             description: "Etapa de assinatura e formalização do contrato.",
             status: "Não iniciada",
             requiresDocument: true,
+            startDate: null,
+            endDate: null,
         },
         {
             id: `temp-${Date.now()}-2`,
@@ -145,6 +148,8 @@ const StepsPage = () => {
             description: "Execução das atividades principais do projeto.",
             status: "Não iniciada",
             requiresDocument: false,
+            startDate: null,
+            endDate: null,
         },
         {
             id: `temp-${Date.now()}-3`,
@@ -153,6 +158,8 @@ const StepsPage = () => {
             description: "Entrega final e encerramento do projeto.",
             status: "Não iniciada",
             requiresDocument: false,
+            startDate: null,
+            endDate: null,
         },
     ];
 
@@ -166,7 +173,7 @@ const StepsPage = () => {
 
     // Lógica para carregar dados em modo de edição
     useEffect(() => {
-        if (projectId) {
+        if (projectId && !location.state?.stagesData) {
             const fetchProjectForEdit = async () => {
                 try {
                     const data = await getProjectById(projectId);
@@ -184,11 +191,11 @@ const StepsPage = () => {
                 }
             };
             fetchProjectForEdit();
-        } else {
+        } else if (!projectId) {
             // Garante que o estado das etapas seja o padrão ao criar novo projeto
             setStages(defaultStages);
         }
-    }, [projectId, navigate, location.state]);
+    }, [projectId, navigate]);
 
     const handleStepChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -220,6 +227,8 @@ const StepsPage = () => {
                 id: `temp-${Date.now()}`,
                 order: stages.length + 1,
                 status: "Não iniciada",
+                startDate: null,
+                endDate: null,
             };
             setStages([...stages, newStep]);
         }
@@ -238,7 +247,19 @@ const StepsPage = () => {
 
     const handleRemoveStep = (id) => {
         if (window.confirm("Tem certeza que deseja remover esta etapa?")) {
-            setStages(stages.filter((s) => s.id !== id));
+            // Primeiro, remove a etapa da lista
+            const filteredStages = stages.filter((s) => s.id !== id);
+
+            // Depois, mapeia a nova lista para reatribuir a ordem
+            const reorderedStages = filteredStages.map((stage, index) => ({
+                ...stage,
+                order: index + 1,
+            }));
+
+            // Atualiza o estado com a lista corrigida e reordenada
+            setStages(reorderedStages);
+
+            // setStages(stages.filter((s) => s.id !== id));
         }
     };
 
@@ -257,65 +278,159 @@ const StepsPage = () => {
     const handleBack = () => {
         // Se temos um projectId, estamos em modo de EDIÇÃO
         if (projectId) {
-            navigate(`/employee/projeto/${projectId}/editar`, {
-                state: { projectData: projectInfo },
+            navigate(`/employee/projeto/${projectId}`, {
+                state: { projectData: projectInfo, stagesData: stages },
             });
         } else {
             // Senão, estamos em modo de CRIAÇÃO
             navigate("/employee/novo-projeto", {
-                state: { projectData: projectInfo },
+                state: { projectData: projectInfo, stagesData: stages },
             });
         }
     };
 
+    // const handleFinalSubmit = async () => {
+    //     if (projectId) {
+    //         // Modo Edição
+    //         const changes = {
+    //             stages: stages
+    //                 .map((s) => {
+    //                     const original = initialStages.find(
+    //                         (is) => is.id === s.id
+    //                     );
+    //                     // Se a etapa é nova (não tem ID original)
+    //                     if (!original) {
+    //                         const { id, ...newStageData } = s; // Remove o ID temporário
+    //                         return newStageData;
+    //                     }
+    //                     // Se a etapa mudou
+    //                     if (JSON.stringify(s) !== JSON.stringify(original)) {
+    //                         return {
+    //                             id: s.id,
+    //                             name: s.name,
+    //                             description: s.description,
+    //                             order: s.order,
+    //                             requiresDocument: s.requiresDocument,
+    //                         };
+    //                     }
+    //                     return null; // Etapa não mudou
+    //                 })
+    //                 .filter(Boolean), // Remove nulos
+    //         };
+
+    //         // Adiciona etapas removidas para deleção (lógica a ser implementada no backend se necessário)
+
+    //         try {
+    //             await updateProject(projectId, changes);
+    //             alert("Projeto atualizado com sucesso!");
+    //             navigate(`/employee/projeto/${projectId}`);
+    //         } catch (error) {
+    //             alert("Erro ao atualizar o projeto.");
+    //         }
+    //     } else {
+    //         // Modo Criação
+    //         const payload = {
+    //             ...projectInfo,
+    //             clientID: `persons/${projectInfo.clientID}`,
+    //             employeeID: `users/${projectInfo.employeeID}`,
+    //             stages: stages.map(({ id, ...rest }) => rest), // Remove IDs temporários
+    //         };
+
+    //         console.log("Enviando payload para criar projeto:", payload);
+
+    //         try {
+    //             const newProject = await createProject(payload);
+    //             alert("Projeto criado com sucesso!");
+    //             navigate(`/employee/inicio`);
+    //         } catch (error) {
+    //             console.error("Detalhes do erro:", error);
+    //             const errorMessage =
+    //                 error.response?.data?.message || "Erro ao criar projeto.";
+    //             alert(errorMessage);
+    //         }
+    //     }
+    // };
     const handleFinalSubmit = async () => {
         if (projectId) {
-            // Modo Edição
-            const changes = {
-                stages: stages
-                    .map((s) => {
-                        const original = initialStages.find(
-                            (is) => is.id === s.id
-                        );
-                        // Se a etapa é nova (não tem ID original)
-                        if (!original) {
-                            const { id, ...newStageData } = s; // Remove o ID temporário
-                            return newStageData;
-                        }
-                        // Se a etapa mudou
-                        if (JSON.stringify(s) !== JSON.stringify(original)) {
-                            return {
-                                id: s.id,
-                                name: s.name,
-                                description: s.description,
-                                order: s.order,
-                                requiresDocument: s.requiresDocument,
-                            };
-                        }
-                        return null; // Etapa não mudou
-                    })
-                    .filter(Boolean), // Remove nulos
-            };
-
-            // Adiciona etapas removidas para deleção (lógica a ser implementada no backend se necessário)
-
+            // --- MODO EDIÇÃO ---
             try {
-                await updateProject(projectId, changes);
+                // 1. Identificar etapas para DELETAR
+                // Pega os IDs das etapas que estavam no início mas não estão mais na lista atual.
+                const initialStageIds = new Set(initialStages.map((s) => s.id));
+                const currentStageIds = new Set(stages.map((s) => s.id));
+                const deletedStageIds = [...initialStageIds].filter(
+                    (id) => !currentStageIds.has(id)
+                );
+
+                // 2. Identificar etapas para ATUALIZAR ou CRIAR (sua lógica original, com uma pequena correção)
+                const updatedAndCreatedStages = {
+                    stages: stages
+                        .map((s) => {
+                            const original = initialStages.find(
+                                (is) => is.id === s.id
+                            );
+                            // Se a etapa é nova
+                            if (!original) {
+                                const { id, ...newStageData } = s;
+                                return newStageData;
+                            }
+                            // Se a etapa mudou
+                            if (
+                                JSON.stringify(s) !== JSON.stringify(original)
+                            ) {
+                                return {
+                                    id: s.id,
+                                    name: s.name,
+                                    description: s.description,
+                                    order: s.order,
+                                    // Corrigido: o campo é requiresDocuments
+                                    requiresDocuments: s.requiresDocuments,
+                                };
+                            }
+                            return null;
+                        })
+                        .filter(Boolean),
+                };
+
+                // 3. VERIFICAR se houve alguma alteração
+                if (
+                    deletedStageIds.length === 0 &&
+                    updatedAndCreatedStages.stages.length === 0
+                ) {
+                    alert("Nenhuma alteração foi detectada.");
+                    return;
+                }
+
+                // 4. EXECUTAR as chamadas à API
+                // Primeiro, deleta as etapas removidas
+                if (deletedStageIds.length > 0) {
+                    // Promise.all envia todas as requisições de delete em paralelo
+                    await Promise.all(
+                        deletedStageIds.map((stageId) =>
+                            deleteProjectStage(projectId, stageId)
+                        )
+                    );
+                }
+
+                // Depois, envia as atualizações e criações, se houver
+                if (updatedAndCreatedStages.stages.length > 0) {
+                    await updateProject(projectId, updatedAndCreatedStages);
+                }
+
                 alert("Projeto atualizado com sucesso!");
                 navigate(`/employee/projeto/${projectId}`);
             } catch (error) {
-                alert("Erro ao atualizar o projeto.");
+                console.error("Erro ao salvar alterações no projeto:", error);
+                alert("Falha ao salvar as alterações. Tente novamente.");
             }
         } else {
-            // Modo Criação
+            // --- MODO CRIAÇÃO (Sua lógica original mantida) ---
             const payload = {
                 ...projectInfo,
                 clientID: `persons/${projectInfo.clientID}`,
                 employeeID: `users/${projectInfo.employeeID}`,
-                stages: stages.map(({ id, ...rest }) => rest), // Remove IDs temporários
+                stages: stages.map(({ id, ...rest }) => rest),
             };
-
-            console.log("Enviando payload para criar projeto:", payload);
 
             try {
                 const newProject = await createProject(payload);
