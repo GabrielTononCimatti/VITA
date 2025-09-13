@@ -375,25 +375,7 @@ export const putProject = async (req, res) =>
 
 export const deleteProjectById = async (req, res) =>
 {
-    if(!isAdmin(req.currentUser) && !isEmployee(req.currentUser))
-    {
-        console.log("\n\n"+"Erro 403: Forbidden. Acesso negado"+"\n\n");
-        return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
-    }
-
-    let Oldproject;
-
-    try
-    {
-        Oldproject = await retrieveProject(req.params.id);
-    }
-    catch(error)
-    {
-        console.log("\n\n"+error+"\n\n");
-        return res.status(400).send({message:error.message});
-    }
-
-    if(!isOnProject(req.currentUser, Oldproject))
+    if(!isAdmin(req.currentUser))
     {
         console.log("\n\n"+"Erro 403: Forbidden. Acesso negado"+"\n\n");
         return res.status(403).send({message:"Erro 403: Forbidden. Acesso negado"});
