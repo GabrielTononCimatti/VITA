@@ -26,3 +26,21 @@ export const updateUser = async (userId, userData) => {
         throw error; // Lança o erro para ser tratado no componente.
     }
 };
+
+/**
+ * Atualiza o email e/ou senha de um usuário.
+ * @param {string} userId - O ID do usuário (da coleção 'users').
+ * @param {object} credentials - Objeto com { email, password }.
+ */
+export const resetEmailPassword = async (userId, credentials) => {
+    try {
+        const response = await api.put(
+            `/user/resetemailpassword/${userId}`,
+            credentials
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao atualizar email/senha:", error);
+        throw error;
+    }
+};

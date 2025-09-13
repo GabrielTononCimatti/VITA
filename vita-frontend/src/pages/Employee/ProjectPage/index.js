@@ -7,17 +7,20 @@ import {
     getProjectById,
     advanceProjectStage,
     returnProjectStage,
+    deleteProject,
 } from "../../../services/projectService";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getDisplayName } from "../../../utils/peopleUtils";
 import {
     FaFileAlt,
+    FaTasks,
     FaCog,
     FaCheckCircle,
     FaChevronRight,
     FaChevronLeft,
     FaEdit,
     FaFileMedical,
+    FaTrash,
 } from "react-icons/fa";
 
 // --- Styled Components (sem alterações) ---
@@ -223,7 +226,32 @@ const ProjectPage = () => {
         }
     };
 
-    const canEdit = user?.role === "admin" || user?.role === "employee";
+    const handleDeleteProject = async (projectName) => {
+        const confirmationMessage = `Você tem certeza que deseja excluir este projeto? Para confirmar, digite o nome do projeto "${projectName}" abaixo:`;
+        const userInput = prompt(confirmationMessage);
+
+        if (userInput === null) {
+            // Usuário clicou em "Cancelar"
+            return;
+        }
+
+        if (userInput === projectName) {
+            try {
+                await deleteProject(projectId);
+                alert("Projeto excluído com sucesso!");
+                navigate(`/${user.role}/inicio`); // Redireciona para a home do usuário
+            } catch (err) {
+                console.error("Erro ao deletar projeto:", err);
+                alert("Não foi possível excluir o projeto.");
+            }
+        } else {
+            alert(
+                "O nome do projeto não corresponde. A exclusão foi cancelada."
+            );
+        }
+    };
+
+    // const canEdit = user?.role === "employee";
 
     if (loading) return <div>Carregando projeto...</div>;
     if (error) return <div style={{ color: "red" }}>{error}</div>;
@@ -261,13 +289,20 @@ const ProjectPage = () => {
                         <strong>Início:</strong>{" "}
                         {new Date(project.startDate).toLocaleDateString()}
                     </p>
-                    {project.expectedEndDate && (
+                    {project.status === "Finalizado" && project.endDate ? (
                         <p>
-                            <strong>Previsão de Término:</strong>{" "}
-                            {new Date(
-                                project.expectedEndDate
-                            ).toLocaleDateString()}
+                            <strong>Término:</strong>{" "}
+                            {new Date(project.endDate).toLocaleDateString()}
                         </p>
+                    ) : (
+                        project.expectedEndDate && (
+                            <p>
+                                <strong>Previsão de Término:</strong>{" "}
+                                {new Date(
+                                    project.expectedEndDate
+                                ).toLocaleDateString()}
+                            </p>
+                        )
                     )}
                 </DatesSection>
             </Header>
@@ -332,45 +367,57 @@ const ProjectPage = () => {
                     </InfoCard>
                 )}
 
-                {canEdit && (
-                    <ActionsContainer>
-                        {/* NOVO: Botões desabilitados se a etapa selecionada não for a ativa */}
+                <ActionsContainer>
+                    {/* Ações para Funcionário */}
+                    {user?.role === "employee" && (
+                        <>
+                            <ActionButton
+                                variant="primary"
+                                onClick={handleAdvanceStage}
+                                disabled={!isAdvanceEnabled}
+                            >
+                                <FaChevronRight /> Avançar Etapa
+                            </ActionButton>
+                            <ActionButton
+                                variant="secondary"
+                                onClick={handleReturnStage}
+                                disabled={!isReturnEnabled}
+                            >
+                                <FaChevronLeft /> Voltar Etapa
+                            </ActionButton>
+                            <ActionButton
+                                variant="secondary"
+                                onClick={() =>
+                                    navigate(
+                                        `/employee/projeto/${projectId}/editar`
+                                    )
+                                }
+                            >
+                                <FaEdit /> Editar Projeto
+                            </ActionButton>
+                            <ActionButton
+                                variant="secondary"
+                                onClick={() =>
+                                    navigate(
+                                        `/employee/projeto/${projectId}/editar-etapas`
+                                    )
+                                }
+                            >
+                                <FaTasks /> Editar Etapas
+                            </ActionButton>
+                        </>
+                    )}
+
+                    {/* Ação para Administrador */}
+                    {user?.role === "admin" && (
                         <ActionButton
-                            variant="primary"
-                            onClick={handleAdvanceStage}
-                            disabled={!isAdvanceEnabled}
+                            variant="danger"
+                            onClick={() => handleDeleteProject(project.name)}
                         >
-                            <FaChevronRight /> Avançar Etapa
+                            <FaTrash /> Excluir Projeto
                         </ActionButton>
-                        <ActionButton
-                            variant="secondary"
-                            onClick={handleReturnStage}
-                            disabled={!isReturnEnabled}
-                        >
-                            <FaChevronLeft /> Voltar Etapa
-                        </ActionButton>
-                        <ActionButton
-                            variant="secondary"
-                            onClick={() =>
-                                navigate(
-                                    `/${user.role}/projeto/${projectId}/editar`
-                                )
-                            }
-                        >
-                            <FaEdit /> Editar Projeto
-                        </ActionButton>
-                        <ActionButton
-                            variant="secondary"
-                            onClick={() =>
-                                navigate(
-                                    `/${user.role}/projeto/${projectId}/editar-etapas`
-                                )
-                            }
-                        >
-                            <FaEdit /> Editar Etapas
-                        </ActionButton>
-                    </ActionsContainer>
-                )}
+                    )}
+                </ActionsContainer>
             </DetailsWrapper>
         </ProjectPageWrapper>
     );

@@ -1,8 +1,15 @@
 // Caminho: vita-frontend/src/pages/RegistrationPage.js
 
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
+import {
+    getAuth,
+    createUserWithEmailAndPassword,
+    sendEmailVerification,
+} from "firebase/auth";
+import { auth } from "../services/firebase";
+import app from "../services/firebase";
 // NOVO: Importando a nova função de serviço
 import { registerUser } from "../services/peopleService";
 
@@ -64,6 +71,7 @@ const RegistrationPage = () => {
         password: "",
         confirmPassword: "",
     });
+    const [message, setMessage] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
@@ -71,32 +79,62 @@ const RegistrationPage = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //     if (formData.password !== formData.confirmPassword) {
+    //         setError("As senhas não coincidem.");
+    //         return;
+    //     }
+    //     setError("");
+    //     setLoading(true);
+
+    //     try {
+    //         // NOVO: Usando a função 'registerUser' para fazer a chamada POST correta
+    //         await registerUser(token, {
+    //             email: formData.email,
+    //             password: formData.password,
+    //         });
+    //         alert(
+    //             "Cadastro realizado com sucesso! Você será redirecionado para a página de login."
+    //         );
+    //         navigate("/login");
+    //     } catch (err) {
+    //         console.error("Erro no registro:", err);
+    //         setError(
+    //             "Falha ao realizar o cadastro. O link pode ser inválido ou expirado."
+    //         );
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
+    const [searchParams] = useSearchParams();
+    const preUserID = searchParams.get("preUserID");
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (formData.password !== formData.confirmPassword) {
-            setError("As senhas não coincidem.");
-            return;
-        }
+        setMessage("");
         setError("");
-        setLoading(true);
-
         try {
-            // NOVO: Usando a função 'registerUser' para fazer a chamada POST correta
-            await registerUser(token, {
-                email: formData.email,
-                password: formData.password,
-            });
-            alert(
-                "Cadastro realizado com sucesso! Você será redirecionado para a página de login."
+            const userCredential = await createUserWithEmailAndPassword(
+                auth,
+                formData.email,
+                formData.password
             );
-            navigate("/login");
+            const user = userCredential.user;
+            // Send verification email with preUserID
+            const actionCodeSettings = {
+                url: `http://localhost:3000/action?preUserID=${preUserID}`,
+                handleCodeInApp: true,
+            };
+            await sendEmailVerification(user, actionCodeSettings);
+
+            setMessage(
+                "Email enviado! Verifique sua caixa de entrada para confirmar seu registro."
+            );
         } catch (err) {
-            console.error("Erro no registro:", err);
-            setError(
-                "Falha ao realizar o cadastro. O link pode ser inválido ou expirado."
-            );
-        } finally {
-            setLoading(false);
+            console.error(err);
+            setError("Falha ao registrar usuário: " + err.message);
         }
     };
 

@@ -143,3 +143,17 @@ export const registerUser = async (token, userData) => {
         throw error;
     }
 };
+
+/**
+ * Envia uma solicitação de alteração de dados pessoais para o admin.
+ * @param {object} changeData - Objeto com as alterações, ex: { changes: [{ field, value }] }.
+ */
+export const requestPersonChanges = async (changeData) => {
+    try {
+        const response = await api.post("/person/requestchanges", changeData);
+        return response.data;
+    } catch (error) {
+        console.error("Erro ao solicitar alteração de dados:", error);
+        throw error;
+    }
+};

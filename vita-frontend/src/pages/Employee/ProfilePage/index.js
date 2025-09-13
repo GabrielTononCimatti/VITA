@@ -1,482 +1,470 @@
+// Caminho: vita-frontend/src/pages/Employee/ProfilePage/index.js
+
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAuth } from "../../../contexts/AuthContext";
-import { updateUser } from "../../../services/userService";
-import { getAdmins } from "../../../services/peopleService"; // NOVO: Importa a função de buscar admins
-// import { createNotification } from "../../../services/notificationService";
+import { requestPersonChanges } from "../../../services/peopleService";
+import { resetEmailPassword } from "../../../services/userService";
+import _ from "lodash";
 
-// Reutilizando componentes de formulário da CreateProjectPage
-const FormWrapper = styled.div`
-    background-color: ${({ theme }) => theme.colors.white};
-    border-radius: ${({ theme }) => theme.borderRadius};
-    padding: ${({ theme }) => theme.spacing.large};
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+// --- Styled Components (Preservados e adaptados) ---
+const ProfileWrapper = styled.div`
     max-width: 800px;
-    margin: auto;
+    margin: 24px auto;
+    padding: 24px;
+`;
+
+const FormSection = styled.form`
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-bottom: 32px;
 `;
 
 const Title = styled.h1`
     color: ${({ theme }) => theme.colors.primary};
-    margin-bottom: ${({ theme }) => theme.spacing.large};
+    margin-bottom: 32px;
 `;
-
-// const Form = styled.form`
-//     display: grid;
-//     grid-template-columns: 1fr 1fr;
-//     gap: ${({ theme }) => theme.spacing.large};
-
-//     @media (max-width: 768px) {
-//         grid-template-columns: 1fr;
-//     }
-// `;
 
 const Form = styled.form`
-    display: flex;
-    flex-direction: column; // Alterado para coluna para agrupar os botões
-    gap: ${({ theme }) => theme.spacing.large};
+    background-color: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 `;
 
-const FieldGrid = styled.div`
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: ${({ theme }) => theme.spacing.large};
-
-    @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-    }
-`;
-
-const FormGroup = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: ${({ theme }) => theme.spacing.small};
-    ${({ fullWidth }) => fullWidth && `grid-column: 1 / -1;`}
-`;
-
-const Label = styled.label`
-    font-weight: bold;
-    color: ${({ theme }) => theme.colors.textLight};
-`;
-
-const Input = styled.input`
-    width: 100%;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 16px;
-`;
-
-const Button = styled.button`
-    padding: 12px 24px;
-    background-color: ${({ theme }) => theme.colors.primary};
-    color: ${({ theme }) => theme.colors.white};
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: bold;
-    grid-column: 2 / 3;
-    justify-self: end;
-
-    @media (max-width: 768px) {
-        grid-column: 1 / -1;
-        width: 100%;
-    }
+const Section = styled.div`
+    margin-bottom: 24px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 24px;
 `;
 
 const SectionTitle = styled.h2`
     font-size: 20px;
     color: #333;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 8px;
-    margin-top: 24px;
     margin-bottom: 16px;
 `;
 
+const FormGroup = styled.div`
+    margin-bottom: 16px;
+`;
+
+const Label = styled.label`
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+`;
+
+const Input = styled.input`
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    &:disabled {
+        background-color: #f1f1f1;
+    }
+`;
+
+const Button = styled.button`
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    background-color: ${({ theme }) => theme.colors.primary};
+    color: white;
+    &:disabled {
+        background-color: #ccc;
+    }
+`;
+
+// --- Componente ---
 // const ProfilePage = () => {
-//     const { user, login } = useAuth(); // Precisamos do login para atualizar o contexto
-//     const [formData, setFormData] = useState({
-//         name: "",
-//         email: "",
-//         phone: "",
-//     });
-//     const [newPassword, setNewPassword] = useState("");
-//     const [confirmPassword, setConfirmPassword] = useState("");
+//     const { user, loading, logout } = useAuth({});
+//     const [formData, setFormData] = useState({});
+//     const [initialData, setInitialData] = useState({});
 
 //     useEffect(() => {
+//         // Quando o usuário do AuthContext carregar, preenchemos o formulário
 //         if (user) {
-//             setFormData({
-//                 name: user.name || "",
+//             const data = {
+//                 // Dados que todos têm
 //                 email: user.email || "",
-//                 phone: user.phone || "", // Adicione 'phone' ao seu db.json se não houver
-//             });
+//                 phoneNumber: user.phoneNumber || "",
+//                 // Dados condicionais
+//                 name: user.name || "",
+//                 cpf: user.cpf || "",
+//                 tradeName: user.tradeName || "",
+//                 companyName: user.companyName || "",
+//                 cnpj: user.cnpj || "",
+//             };
+//             setFormData(data);
+//             setInitialData(data); // Guarda o estado original para comparar
 //         }
 //     }, [user]);
 
 //     const handleChange = (e) => {
-//         const { name, value } = e.target;
-//         setFormData((prev) => ({ ...prev, [name]: value }));
+//         setFormData({ ...formData, [e.target.name]: e.target.value });
 //     };
 
 //     const handleSubmit = async (e) => {
 //         e.preventDefault();
 
-//         if (newPassword && newPassword !== confirmPassword) {
-//             alert("As novas senhas não coincidem!");
+//         // Compara o estado atual com o inicial para encontrar o que mudou
+//         const changes = {};
+//         Object.keys(formData).forEach((key) => {
+//             if (!_.isEqual(formData[key], initialData[key])) {
+//                 changes[key] = formData[key];
+//             }
+//         });
+
+//         if (Object.keys(changes).length === 0) {
+//             alert("Nenhuma alteração foi feita.");
 //             return;
 //         }
 
 //         try {
-//             const dataToUpdate = {
-//                 ...formData,
-//             };
-
-//             if (newPassword) {
-//                 dataToUpdate.password = newPassword;
-//             }
-
-//             // const password = user.password;
-//             const updatedUser = await updateUser(user.id, dataToUpdate);
-//             alert("Perfil atualizado com sucesso!");
-//             await login(updatedUser.email, updatedUser.password);
-
-//             setNewPassword("");
-//             setConfirmPassword("");
+//             // A rota updatePerson já espera o ID da pessoa (que está no user.id)
+//             await updatePerson(user.id, changes);
+//             alert(
+//                 "Perfil atualizado com sucesso! Pode ser necessário recarregar a página para ver as alterações."
+//             );
+//             // Atualiza o initialData para o novo estado salvo
+//             setInitialData(formData);
 //         } catch (error) {
-//             alert("Não foi possível atualizar o perfil.");
+//             alert("Falha ao atualizar o perfil.");
 //         }
 //     };
 
+//     if (loading || !user) {
+//         return <div>Carregando perfil...</div>;
+//     }
+
 //     return (
-//         <FormWrapper>
+//         <ProfileWrapper>
 //             <Title>Meu Perfil</Title>
 //             <Form onSubmit={handleSubmit}>
-//                 <FormGroup>
-//                     <Label htmlFor="name">Nome Completo</Label>
-//                     <Input
-//                         id="name"
-//                         name="name"
-//                         value={formData.name}
-//                         onChange={handleChange}
-//                     />
-//                 </FormGroup>
+//                 <Section>
+//                     <SectionTitle>Informações de Contato</SectionTitle>
+//                     <FormGroup>
+//                         <Label>Email</Label>
+//                         {/* O email é gerenciado pelo Firebase Auth, então geralmente não é editável aqui */}
+//                         <Input type="email" value={formData.email} disabled />
+//                     </FormGroup>
+//                     <FormGroup>
+//                         <Label>Telefone</Label>
+//                         <Input
+//                             type="text"
+//                             name="phoneNumber"
+//                             value={formData.phoneNumber}
+//                             onChange={handleChange}
+//                         />
+//                     </FormGroup>
+//                 </Section>
 
-//                 <FormGroup>
-//                     <Label htmlFor="phone">Telefone</Label>
-//                     <Input
-//                         type="tel"
-//                         id="phone"
-//                         name="phone"
-//                         value={formData.phone}
-//                         onChange={handleChange}
-//                     />
-//                 </FormGroup>
-
-//                 <FormGroup fullWidth>
-//                     <Label htmlFor="email">Email</Label>
-//                     <Input
-//                         type="email"
-//                         id="email"
-//                         name="email"
-//                         value={formData.email}
-//                         onChange={handleChange}
-//                     />
-//                 </FormGroup>
-
-//                 <hr
-//                     style={{
-//                         gridColumn: "1 / -1",
-//                         border: "none",
-//                         borderTop: "1px solid #eee",
-//                     }}
-//                 />
-
-//                 <FormGroup>
-//                     <Label htmlFor="newPassword">Nova Senha</Label>
-//                     <Input
-//                         type="password"
-//                         id="newPassword"
-//                         name="newPassword"
-//                         placeholder="Deixe em branco para não alterar"
-//                         value={newPassword}
-//                         onChange={(e) => setNewPassword(e.target.value)}
-//                     />
-//                 </FormGroup>
-
-//                 <FormGroup>
-//                     <Label htmlFor="confirmPassword">
-//                         Confirmar Nova Senha
-//                     </Label>
-//                     <Input
-//                         type="password"
-//                         id="confirmPassword"
-//                         name="confirmPassword"
-//                         placeholder="Confirme a nova senha"
-//                         value={confirmPassword}
-//                         onChange={(e) => setConfirmPassword(e.target.value)}
-//                     />
-//                 </FormGroup>
-
-//                 {/* Adicionar campos de CPF/CNPJ aqui se necessário */}
-
-//                 <FormGroup>
-//                     {/* Espaço em branco para alinhar o botão */}
-//                 </FormGroup>
+//                 <Section>
+//                     <SectionTitle>Informações Pessoais</SectionTitle>
+//                     {/* Renderização condicional baseada no personType */}
+//                     {(user.personType === "PF" ||
+//                         user.personType === "F" ||
+//                         user.personType === "A") && (
+//                         <FormGroup>
+//                             <Label>Nome Completo</Label>
+//                             <Input
+//                                 type="text"
+//                                 name="name"
+//                                 value={formData.name}
+//                                 onChange={handleChange}
+//                             />
+//                         </FormGroup>
+//                     )}
+//                     {user.personType === "PF" && (
+//                         <FormGroup>
+//                             <Label>CPF</Label>
+//                             <Input
+//                                 type="text"
+//                                 name="cpf"
+//                                 value={formData.cpf}
+//                                 onChange={handleChange}
+//                             />
+//                         </FormGroup>
+//                     )}
+//                     {user.personType === "PJ" && (
+//                         <>
+//                             <FormGroup>
+//                                 <Label>Nome Fantasia</Label>
+//                                 <Input
+//                                     type="text"
+//                                     name="tradeName"
+//                                     value={formData.tradeName}
+//                                     onChange={handleChange}
+//                                 />
+//                             </FormGroup>
+//                             <FormGroup>
+//                                 <Label>Razão Social</Label>
+//                                 <Input
+//                                     type="text"
+//                                     name="companyName"
+//                                     value={formData.companyName}
+//                                     onChange={handleChange}
+//                                 />
+//                             </FormGroup>
+//                             <FormGroup>
+//                                 <Label>CNPJ</Label>
+//                                 <Input
+//                                     type="text"
+//                                     name="cnpj"
+//                                     value={formData.cnpj}
+//                                     onChange={handleChange}
+//                                 />
+//                             </FormGroup>
+//                         </>
+//                     )}
+//                 </Section>
 
 //                 <Button type="submit">Salvar Alterações</Button>
 //             </Form>
-//         </FormWrapper>
+//         </ProfileWrapper>
 //     );
 // };
-
 const ProfilePage = () => {
-    const { user, login } = useAuth();
+    const { user, loading, logout } = useAuth(); // Adicionado logout
 
-    // NOVO: Estados separados para dados pessoais e credenciais
-    const [personalData, setPersonalData] = useState({});
-    const [credentialsData, setCredentialsData] = useState({
+    const [personForm, setPersonForm] = useState({});
+    const [initialPersonData, setInitialPersonData] = useState({});
+    const [accountForm, setAccountForm] = useState({
         email: "",
-        newPassword: "",
+        password: "",
         confirmPassword: "",
     });
 
-    // NOVO: Guarda o estado original do usuário para comparar as mudanças
-    const [originalUser, setOriginalUser] = useState(null);
-
     useEffect(() => {
         if (user) {
-            const initialData = {
+            const personData = {
+                phoneNumber: user.phoneNumber || "",
                 name: user.name || "",
-                razaoSocial: user.razaoSocial || "",
                 cpf: user.cpf || "",
+                tradeName: user.tradeName || "",
+                companyName: user.companyName || "",
                 cnpj: user.cnpj || "",
-                phone: user.phone || "",
             };
-            setPersonalData(initialData);
-            setCredentialsData({
-                email: user.email || "",
-                newPassword: "",
-                confirmPassword: "",
-            });
-            setOriginalUser({ ...user, ...initialData }); // Salva o estado original
+            setPersonForm(personData);
+            setInitialPersonData(personData);
+            setAccountForm((prev) => ({ ...prev, email: user.email || "" }));
         }
     }, [user]);
 
-    const handlePersonalChange = (e) => {
-        const { name, value } = e.target;
-        setPersonalData((prev) => ({ ...prev, [name]: value }));
+    const handlePersonChange = (e) => {
+        setPersonForm({ ...personForm, [e.target.name]: e.target.value });
     };
 
-    const handleCredentialsChange = (e) => {
-        const { name, value } = e.target;
-        setCredentialsData((prev) => ({ ...prev, [name]: value }));
+    const handleAccountChange = (e) => {
+        setAccountForm({ ...accountForm, [e.target.name]: e.target.value });
     };
 
-    // NOVO: Função para solicitar alteração de dados pessoais
-    const handleRequestChange = async (e) => {
-        e.preventDefault();
-        const admins = await getAdmins();
-        if (admins.length === 0) {
-            alert(
-                "Nenhum administrador encontrado para receber a solicitação."
-            );
-            return;
-        }
+    // const handleRequestChanges = async (e) => {
+    //     e.preventDefault();
+    //     const changes = Object.keys(personForm)
+    //         .filter(
+    //             (key) => !_.isEqual(personForm[key], initialPersonData[key])
+    //         )
+    //         .map((key) => ({ field: key, value: personForm[key] }));
 
-        let changes = [];
-        // Compara os dados do formulário com os dados originais
-        for (const key in personalData) {
-            if (personalData[key] !== originalUser[key]) {
-                changes.push(
-                    `- ${key}: de "${originalUser[key] || "vazio"}" para "${
-                        personalData[key]
-                    }"`
-                );
-            }
-        }
+    //     if (changes.length === 0) {
+    //         alert("Nenhuma alteração nos dados pessoais foi feita.");
+    //         return;
+    //     }
 
-        if (changes.length === 0) {
-            alert("Nenhuma alteração foi feita nos dados pessoais.");
-            return;
-        }
+    //     try {
+    //         console.log("Enviando alterações:", { changes });
+    //         await requestPersonChanges({ changes });
+    //         alert(
+    //             "Sua solicitação de alteração foi enviada para um administrador!"
+    //         );
+    //         setInitialPersonData(personForm);
+    //     } catch (error) {
+    //         alert("Falha ao enviar solicitação.");
+    //     }
+    // };
 
-        const message = `O usuário ${
-            originalUser.name || originalUser.razaoSocial
-        } (ID: ${
-            user.id
-        }) solicitou as seguintes alterações de perfil:\n${changes.join("\n")}`;
-
-        // try {
-        //     // Envia notificação para cada administrador
-        //     for (const admin of admins) {
-        //         await createNotification({
-        //             userId: admin.id,
-        //             message,
-        //             projectId: null,
-        //         });
-        //     }
-        //     alert("Sua solicitação de alteração foi enviada ao administrador!");
-        // } catch (error) {
-        //     alert("Ocorreu um erro ao enviar a solicitação.");
-        // }
-    };
-
-    // NOVO: Função para salvar diretamente email e senha
-    const handleSaveChanges = async (e) => {
+    const handleRequestChanges = async (e) => {
         e.preventDefault();
 
-        if (
-            credentialsData.newPassword &&
-            credentialsData.newPassword !== credentialsData.confirmPassword
-        ) {
-            alert("As novas senhas não coincidem!");
-            return;
-        }
+        // CORREÇÃO: Monta um objeto plano com as alterações
+        const changesPayload = Object.keys(personForm)
+            .filter(
+                (key) => !_.isEqual(personForm[key], initialPersonData[key])
+            )
+            .reduce((acc, key) => {
+                acc[key] = personForm[key];
+                return acc;
+            }, {});
 
-        const dataToUpdate = { email: credentialsData.email };
-        if (credentialsData.newPassword) {
-            dataToUpdate.password = credentialsData.newPassword;
-        }
-
-        // Verifica se houve alguma alteração real
-        if (
-            !credentialsData.newPassword &&
-            credentialsData.email === user.email
-        ) {
-            alert("Nenhuma alteração foi feita no e-mail ou senha.");
+        if (Object.keys(changesPayload).length === 0) {
+            alert("Nenhuma alteração nos dados pessoais foi feita.");
             return;
         }
 
         try {
-            const updatedUser = await updateUser(user.id, dataToUpdate);
-            alert("Credenciais atualizadas com sucesso!");
-            // Faz login novamente para atualizar o contexto
-            await login(updatedUser.email, updatedUser.password);
-            setCredentialsData((prev) => ({
-                ...prev,
-                newPassword: "",
-                confirmPassword: "",
-            }));
+            await requestPersonChanges(changesPayload);
+            alert(
+                "Sua solicitação de alteração foi enviada para um administrador!"
+            );
+            setInitialPersonData(personForm); // Atualiza o estado base para evitar reenvios
         } catch (error) {
-            alert("Não foi possível atualizar as credenciais.");
+            alert("Falha ao enviar solicitação.");
         }
     };
 
-    if (!user) {
-        return <p>Carregando...</p>;
-    }
+    const handleAccountSubmit = async (e) => {
+        e.preventDefault();
+        if (
+            accountForm.password &&
+            accountForm.password !== accountForm.confirmPassword
+        ) {
+            alert("As senhas não coincidem.");
+            return;
+        }
+
+        const payload = {};
+        if (accountForm.email !== user.email) payload.email = accountForm.email;
+        if (accountForm.password) payload.password = accountForm.password;
+
+        if (Object.keys(payload).length === 0) {
+            alert("Nenhuma alteração nos dados da conta foi feita.");
+            return;
+        }
+
+        try {
+            await resetEmailPassword(user.id, payload);
+            alert(
+                "Dados da conta atualizados com sucesso! Por segurança, você será deslogado."
+            );
+            logout(); // Desloga o usuário após a mudança
+        } catch (error) {
+            alert("Falha ao atualizar dados da conta.");
+        }
+    };
+
+    if (loading || !user) return <div>Carregando perfil...</div>;
 
     return (
-        <FormWrapper>
+        <ProfileWrapper>
             <Title>Meu Perfil</Title>
 
-            {/* Formulário de Dados Pessoais */}
-            <Form onSubmit={handleRequestChange}>
+            <FormSection onSubmit={handleRequestChanges}>
                 <SectionTitle>Informações Pessoais</SectionTitle>
-                <FieldGrid>
-                    {user.role === "client" && user.cnpj ? (
-                        <>
-                            <FormGroup>
-                                <Label htmlFor="razaoSocial">
-                                    Razão Social
-                                </Label>
-                                <Input
-                                    id="razaoSocial"
-                                    name="razaoSocial"
-                                    value={personalData.razaoSocial}
-                                    onChange={handlePersonalChange}
-                                />
-                            </FormGroup>
-                            <FormGroup>
-                                <Label htmlFor="cnpj">CNPJ</Label>
-                                <Input
-                                    id="cnpj"
-                                    name="cnpj"
-                                    value={personalData.cnpj}
-                                    onChange={handlePersonalChange}
-                                />
-                            </FormGroup>
-                        </>
-                    ) : (
-                        <>
-                            <FormGroup>
-                                <Label htmlFor="name">Nome Completo</Label>
-                                <Input
-                                    id="name"
-                                    name="name"
-                                    value={personalData.name}
-                                    onChange={handlePersonalChange}
-                                />
-                            </FormGroup>
-                            {user.role === "client" && user.cpf && (
-                                <FormGroup>
-                                    <Label htmlFor="cpf">CPF</Label>
-                                    <Input
-                                        id="cpf"
-                                        name="cpf"
-                                        value={personalData.cpf}
-                                        onChange={handlePersonalChange}
-                                    />
-                                </FormGroup>
-                            )}
-                        </>
-                    )}
+                <p
+                    style={{
+                        fontSize: "14px",
+                        color: "#666",
+                        marginTop: "-10px",
+                        marginBottom: "20px",
+                    }}
+                >
+                    Qualquer alteração aqui será enviada para aprovação de um
+                    administrador.
+                </p>
+                <FormGroup>
+                    <Label>Telefone</Label>
+                    <Input
+                        type="text"
+                        name="phoneNumber"
+                        value={personForm.phoneNumber || ""}
+                        onChange={handlePersonChange}
+                    />
+                </FormGroup>
+                {(user.personType === "PF" ||
+                    user.personType === "F" ||
+                    user.personType === "A") && (
                     <FormGroup>
-                        <Label htmlFor="phone">Telefone</Label>
+                        <Label>Nome Completo</Label>
                         <Input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={personalData.phone}
-                            onChange={handlePersonalChange}
+                            type="text"
+                            name="name"
+                            value={personForm.name || ""}
+                            onChange={handlePersonChange}
                         />
                     </FormGroup>
-                </FieldGrid>
-                <Button type="submit" secondary>
-                    Solicitar Alteração
-                </Button>
-            </Form>
+                )}
+                {user.personType === "PF" && (
+                    <FormGroup>
+                        <Label>CPF</Label>
+                        <Input
+                            type="text"
+                            name="cpf"
+                            value={personForm.cpf || ""}
+                            onChange={handlePersonChange}
+                        />
+                    </FormGroup>
+                )}
+                {user.personType === "PJ" && (
+                    <>
+                        <FormGroup>
+                            <Label>Nome Fantasia</Label>
+                            <Input
+                                type="text"
+                                name="tradeName"
+                                value={personForm.tradeName || ""}
+                                onChange={handlePersonChange}
+                            />
+                        </FormGroup>
+                        <FormGroup>
+                            <Label>Razão Social</Label>
+                            <Input
+                                type="text"
+                                name="companyName"
+                                value={personForm.companyName || ""}
+                                onChange={handlePersonChange}
+                            />
+                        </FormGroup>
+                        <FormGroup>
+                            <Label>CNPJ</Label>
+                            <Input
+                                type="text"
+                                name="cnpj"
+                                value={personForm.cnpj || ""}
+                                onChange={handlePersonChange}
+                            />
+                        </FormGroup>
+                    </>
+                )}
+                <Button type="submit">Solicitar Alteração</Button>
+            </FormSection>
 
-            {/* Formulário de Credenciais */}
-            <Form onSubmit={handleSaveChanges}>
-                <SectionTitle>Credenciais de Acesso</SectionTitle>
-                <FieldGrid>
-                    <FormGroup fullWidth>
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={credentialsData.email}
-                            onChange={handleCredentialsChange}
-                            required
-                        />
-                    </FormGroup>
-                    <FormGroup>
-                        <Label htmlFor="newPassword">Nova Senha</Label>
-                        <Input
-                            type="password"
-                            id="newPassword"
-                            name="newPassword"
-                            placeholder="Deixe em branco para não alterar"
-                            value={credentialsData.newPassword}
-                            onChange={handleCredentialsChange}
-                        />
-                    </FormGroup>
-                    <FormGroup>
-                        <Label htmlFor="confirmPassword">
-                            Confirmar Nova Senha
-                        </Label>
-                        <Input
-                            type="password"
-                            id="confirmPassword"
-                            name="confirmPassword"
-                            value={credentialsData.confirmPassword}
-                            onChange={handleCredentialsChange}
-                        />
-                    </FormGroup>
-                </FieldGrid>
-                <Button type="submit">Salvar Alterações</Button>
-            </Form>
-        </FormWrapper>
+            <FormSection onSubmit={handleAccountSubmit}>
+                <SectionTitle>Informações da Conta</SectionTitle>
+                <FormGroup>
+                    <Label>Email</Label>
+                    <Input
+                        type="email"
+                        name="email"
+                        value={accountForm.email}
+                        onChange={handleAccountChange}
+                    />
+                </FormGroup>
+                <FormGroup>
+                    <Label>Nova Senha (deixe em branco para não alterar)</Label>
+                    <Input
+                        type="password"
+                        name="password"
+                        value={accountForm.password}
+                        onChange={handleAccountChange}
+                    />
+                </FormGroup>
+                <FormGroup>
+                    <Label>Confirmar Nova Senha</Label>
+                    <Input
+                        type="password"
+                        name="confirmPassword"
+                        value={accountForm.confirmPassword}
+                        onChange={handleAccountChange}
+                    />
+                </FormGroup>
+                <Button type="submit">Salvar Dados da Conta</Button>
+            </FormSection>
+        </ProfileWrapper>
     );
 };
 

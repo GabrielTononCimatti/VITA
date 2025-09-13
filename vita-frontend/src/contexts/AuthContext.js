@@ -1,5 +1,5 @@
 // Caminho: vita-frontend/src/contexts/AuthContext.js
-
+import { useLocation } from "react-router-dom";
 import React, { createContext, useState, useEffect, useContext } from "react";
 import {
     onAuthStateChanged,

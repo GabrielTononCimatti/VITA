@@ -136,6 +136,19 @@ const CreateProjectPage = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        const { startDate, expectedEndDate } = projectData;
+        if (
+            startDate &&
+            expectedEndDate &&
+            new Date(startDate) > new Date(expectedEndDate)
+        ) {
+            alert(
+                "A data de início não pode ser posterior à data de término prevista."
+            );
+            return; // Impede o envio do formulário
+        }
+
         // Passa os dados do projeto para a próxima página (StepsPage)
         navigate("/employee/novo-projeto/etapas", { state: { projectData } });
     };

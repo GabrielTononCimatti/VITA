@@ -65,7 +65,7 @@ const StatusBadge = styled.span`
         switch (status) {
             case "Em andamento":
                 return "#6c757d";
-            case "Atrasado":
+            case "Em atraso":
                 return "#ffc107";
             case "Finalizado":
                 return "#28a745";

@@ -150,8 +150,12 @@ const ProjectNotificationsPanel = ({
                     ? await getReceivedNotifications()
                     : await getSentNotifications();
 
+            const safeNotifications = Array.isArray(allNotifications)
+                ? allNotifications
+                : [];
+
             // FILTRO PRINCIPAL: Mantém apenas as notificações deste projeto
-            const projectNotifications = (allNotifications || []).filter(
+            const projectNotifications = safeNotifications.filter(
                 (n) => stripRef(n.projectID) === projectId
             );
 
@@ -184,6 +188,12 @@ const ProjectNotificationsPanel = ({
         }
     };
 
+    const sortedNotifications = useMemo(() => {
+        return [...notifications].sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+    }, [notifications]);
+
     // const handleDelete = async (id) => {
     //     if (
     //         window.confirm("Tem certeza que deseja excluir esta notificação?")
@@ -198,10 +208,10 @@ const ProjectNotificationsPanel = ({
     // };
 
     const { unreadNotifications, readNotifications } = useMemo(() => {
-        const unread = notifications.filter((n) => !n.read);
-        const read = notifications.filter((n) => n.read);
+        const unread = sortedNotifications.filter((n) => !n.read);
+        const read = sortedNotifications.filter((n) => n.read);
         return { unreadNotifications: unread, readNotifications: read };
-    }, [notifications]);
+    }, [sortedNotifications]);
 
     return (
         <PanelOverlay isOpen={isOpen} onClick={onClose}>
@@ -367,8 +377,8 @@ const ProjectNotificationsPanel = ({
                         </>
                     ) : (
                         <Section>
-                            {notifications.length > 0 ? (
-                                notifications.map((n) => (
+                            {sortedNotifications.length > 0 ? (
+                                sortedNotifications.map((n) => (
                                     <NotificationItem key={n.id} read>
                                         <strong>{n.subject}</strong>
                                         <p>{n.message}</p>

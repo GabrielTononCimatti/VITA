@@ -120,11 +120,60 @@ const CreatePersonPage = () => {
         alert("Link copiado para a área de transferência!");
     };
 
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //     setError("");
+    //     setIsSubmitting(true);
+
+    //     const payload = {
+    //         personType: personData.personType,
+    //         phoneNumber: personData.phoneNumber,
+    //         createdBy: `users/${user.id}`,
+    //     };
+
+    //     if (personData.personType === "PF") {
+    //         payload.name = personData.name;
+    //         payload.cpf = personData.cpf;
+    //     } else if (personData.personType === "PJ") {
+    //         payload.tradeName = personData.tradeName;
+    //         payload.companyName = personData.companyName;
+    //         payload.cnpj = personData.cnpj;
+    //     } else {
+    //         payload.name = personData.name;
+    //     }
+
+    //     try {
+    //         const responseData = await createPerson(payload);
+
+    //         // Passo 1: Mostra a resposta completa no console para depuração
+    //         console.log("Resposta do backend:", responseData);
+
+    //         // Passo 2: Verifica se a resposta contém o link
+    //         if (responseData && responseData.userID) {
+    //             // Construímos o link completo do front-end
+    //             const link = `${window.location.origin}/register/${responseData.userID}`;
+    //             setRegistrationLink(link);
+    //         } else {
+    //             setError(
+    //                 "Pessoa criada, mas o ID de registro não foi retornado. Verifique o console."
+    //             );
+    //         }
+    //     } catch (err) {
+    //         console.error("Erro completo ao criar pessoa:", err);
+    //         // Mostra o erro da API para o admin no console
+    //         setError(
+    //             "Falha ao criar pessoa. Verifique os dados e tente novamente."
+    //         );
+    //     } finally {
+    //         setIsSubmitting(false);
+    //     }
+    // };
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         setIsSubmitting(true);
 
+        // NOVO: Construção do payload limpo
         const payload = {
             personType: personData.personType,
             phoneNumber: personData.phoneNumber,
@@ -136,31 +185,25 @@ const CreatePersonPage = () => {
             payload.cpf = personData.cpf;
         } else if (personData.personType === "PJ") {
             payload.tradeName = personData.tradeName;
-            payload.companyName = personData.companyName;
+            if (personData.companyName)
+                payload.companyName = personData.companyName; // Só envia se não for vazio
             payload.cnpj = personData.cnpj;
         } else {
+            // Para Funcionário (F) e Admin (A)
             payload.name = personData.name;
         }
 
         try {
-            const responseData = await createPerson(payload);
-
-            // Passo 1: Mostra a resposta completa no console para depuração
-            console.log("Resposta do backend:", responseData);
-
-            // Passo 2: Verifica se a resposta contém o link
-            if (responseData && responseData.userID) {
-                // Construímos o link completo do front-end
-                const link = `${window.location.origin}/register/${responseData.userID}`;
+            const response = await createPerson(payload);
+            if (response && response.userID) {
+                const link = `http://localhost:3001/?preUserID=${response.userID}`;
                 setRegistrationLink(link);
             } else {
                 setError(
-                    "Pessoa criada, mas o ID de registro não foi retornado. Verifique o console."
+                    "Pessoa criada, mas não foi possível obter o link de registro."
                 );
             }
         } catch (err) {
-            console.error("Erro completo ao criar pessoa:", err);
-            // Mostra o erro da API para o admin no console
             setError(
                 "Falha ao criar pessoa. Verifique os dados e tente novamente."
             );

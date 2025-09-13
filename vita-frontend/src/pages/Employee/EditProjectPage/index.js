@@ -8,6 +8,10 @@ import {
     getProjectById,
     updateProject,
 } from "../../../services/projectService";
+import {
+    convertInputDateToISO,
+    formatISOToInputDate,
+} from "../../../utils/dateUtils";
 import { getDisplayName } from "../../../utils/peopleUtils";
 import _ from "lodash"; // Biblioteca para comparar objetos
 
@@ -187,13 +191,40 @@ const EditProjectPage = () => {
     const handleSaveChanges = async (e) => {
         e.preventDefault();
 
+        const { startDate, expectedEndDate } = projectData;
+        if (
+            startDate &&
+            expectedEndDate &&
+            new Date(startDate) > new Date(expectedEndDate)
+        ) {
+            alert(
+                "A data de início não pode ser posterior à data de término prevista."
+            );
+            return; // Impede o envio do formulário
+        }
+
         const changes = {};
         // Compara o estado atual com o inicial e pega apenas o que mudou
         Object.keys(projectData).forEach((key) => {
-            if (!_.isEqual(projectData[key], initialData[key])) {
+            const initialValue =
+                key === "startDate" || key === "expectedEndDate"
+                    ? formatISOToInputDate(initialData[key])
+                    : initialData[key];
+            if (!_.isEqual(projectData[key], initialValue)) {
                 changes[key] = projectData[key];
             }
         });
+
+        if (changes.startDate) {
+            changes.startDate = convertInputDateToISO(changes.startDate);
+        }
+        if (changes.expectedEndDate) {
+            changes.expectedEndDate = convertInputDateToISO(
+                changes.expectedEndDate
+            );
+        }
+
+        console.log("Mudanças detectadas:", changes.expectedEndDate);
 
         // Formata os IDs para o backend
         if (changes.clientID) changes.clientID = `persons/${changes.clientID}`;
@@ -261,7 +292,7 @@ const EditProjectPage = () => {
                         id="startDate"
                         name="startDate"
                         type="date"
-                        value={projectData.startDate?.split("T")[0] || ""}
+                        value={formatISOToInputDate(projectData.startDate)}
                         onChange={handleChange}
                         required
                     />
@@ -276,7 +307,10 @@ const EditProjectPage = () => {
                         id="expectedEndDate"
                         name="expectedEndDate"
                         type="date"
-                        value={projectData.expectedEndDate?.split("T")[0] || ""}
+                        value={
+                            formatISOToInputDate(projectData.expectedEndDate) ||
+                            ""
+                        }
                         onChange={handleChange}
                     />
                 </FormGroup>

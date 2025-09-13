@@ -46,6 +46,19 @@ const Button = styled.button`
     }
 `;
 
+const ForgotPasswordLink = styled.a`
+    text-align: center;
+    font-size: 14px;
+    color: ${({ theme }) => theme.colors.primary};
+    cursor: pointer;
+    text-decoration: underline;
+    margin-top: -10px;
+
+    &:hover {
+        opacity: 0.8;
+    }
+`;
+
 const Title = styled.h1`
     text-align: center;
     color: ${({ theme }) => theme.colors.primary};
@@ -119,6 +132,14 @@ const LoginPage = () => {
                     required
                 />
                 <Button type="submit">Entrar</Button>
+                <ForgotPasswordLink
+                    onClick={() =>
+                        (window.location.href =
+                            "http://localhost:3001/forgot-password")
+                    }
+                >
+                    Esqueci minha senha
+                </ForgotPasswordLink>
             </LoginForm>
         </LoginWrapper>
     );

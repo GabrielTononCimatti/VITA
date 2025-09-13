@@ -10,6 +10,7 @@ import {
     updateProject,
     deleteProjectStage,
 } from "../../../services/projectService";
+import { convertInputDateToISO } from "../../../utils/dateUtils";
 import { FaEdit, FaTrash, FaPlus } from "react-icons/fa";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 
@@ -246,6 +247,16 @@ const StepsPage = () => {
     };
 
     const handleRemoveStep = (id) => {
+        const stageToRemove = stages.find((s) => s.id === id);
+
+        // NOVO: Validação de status
+        if (stageToRemove && stageToRemove.status === "Em andamento") {
+            alert(
+                "Não é permitido excluir uma etapa em andamento. Altere a etapa ativa do projeto antes de excluí-la."
+            );
+            return; // Impede a exclusão
+        }
+
         if (window.confirm("Tem certeza que deseja remover esta etapa?")) {
             // Primeiro, remove a etapa da lista
             const filteredStages = stages.filter((s) => s.id !== id);
@@ -429,6 +440,10 @@ const StepsPage = () => {
                 ...projectInfo,
                 clientID: `persons/${projectInfo.clientID}`,
                 employeeID: `users/${projectInfo.employeeID}`,
+                startDate: convertInputDateToISO(projectInfo.startDate),
+                expectedEndDate: convertInputDateToISO(
+                    projectInfo.expectedEndDate
+                ),
                 stages: stages.map(({ id, ...rest }) => rest),
             };
 

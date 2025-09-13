@@ -118,10 +118,12 @@ const DocumentsPage = () => {
             setLoading(true);
             // CORREÇÃO: Passando ambos os IDs para o serviço
             const data = await getDocumentsByStage(projectId, etapaId);
+
+            console.log("Documentos recebidos: ", data);
             // O backend já anexa os dados do usuário em cada documento
-            setDocuments(data || []);
+            setDocuments(data.document || []);
         } catch (err) {
-            setError("Não foi possível carregar os documentos.");
+            setError("");
         } finally {
             setLoading(false);
         }
@@ -154,12 +156,14 @@ const DocumentsPage = () => {
                     stageID: stageID,
                 });
             } else {
-                // console.log(formData.file);
+                console.log("Enviando AQUIII:");
+                console.log(formData.name);
 
                 const data = new FormData();
                 data.append("file", formData.file);
 
                 const metaData = {
+                    name: formData.name,
                     stageID: stageID,
                 };
 
@@ -223,13 +227,7 @@ const DocumentsPage = () => {
                             {documents.map((doc) => (
                                 <tr key={doc.id}>
                                     <td>{doc.name}</td>
-                                    <td>
-                                        {doc.user
-                                            ? getDisplayName(
-                                                  doc.user.personData
-                                              )
-                                            : "N/A"}
-                                    </td>
+                                    <td>{doc.createdBy}</td>
                                     <td>
                                         {new Date(
                                             doc.createdAt
@@ -289,7 +287,6 @@ const DocumentsPage = () => {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleInputChange}
-                                required
                             />
                         </FormGroup>
 

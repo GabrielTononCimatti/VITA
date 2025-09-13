@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { getPersonById, updatePerson } from "../../services/peopleService";
+import { resetEmailPassword } from "../../services/userService";
 
 // --- Styled Components (sem alterações) ---
 const FormWrapper = styled.div`
@@ -89,74 +90,140 @@ const EditPersonPage = () => {
     const { userId } = useParams();
 
     // O estado do formulário foi simplificado, removendo o email
-    const [formData, setFormData] = useState({
-        personType: "",
-        name: "",
-        cpf: "",
-        tradeName: "",
-        companyName: "",
-        cnpj: "",
-        phoneNumber: "",
-    });
+    const [formData, setFormData] = useState(null);
+    const [initialEmail, setInitialEmail] = useState("");
+    const [associatedUserId, setAssociatedUserId] = useState("");
     const [loading, setLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState("");
 
+    // useEffect(() => {
+    //     const fetchPersonData = async () => {
+    //         try {
+    //             // A 'response' é o próprio objeto da pessoa
+    //             const personDataFromApi = await getPersonById(userId);
+
+    //             // Preenchemos o formulário diretamente com os dados recebidos
+    //             setFormData({
+    //                 personType: personDataFromApi.personType || "",
+    //                 name: personDataFromApi.name || "",
+    //                 cpf: personDataFromApi.cpf || "",
+    //                 tradeName: personDataFromApi.tradeName || "",
+    //                 companyName: personDataFromApi.companyName || "",
+    //                 cnpj: personDataFromApi.cnpj || "",
+    //                 phoneNumber: personDataFromApi.phoneNumber || "",
+    //             });
+    //         } catch (err) {
+    //             console.error("Erro ao buscar dados:", err);
+    //             setError("Não foi possível carregar os dados para edição.");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
+
+    //     if (userId) {
+    //         fetchPersonData();
+    //     }
+    // }, [userId]);
     useEffect(() => {
         const fetchPersonData = async () => {
             try {
-                // A 'response' é o próprio objeto da pessoa
-                const personDataFromApi = await getPersonById(userId);
-
-                // Preenchemos o formulário diretamente com os dados recebidos
-                setFormData({
-                    personType: personDataFromApi.personType || "",
-                    name: personDataFromApi.name || "",
-                    cpf: personDataFromApi.cpf || "",
-                    tradeName: personDataFromApi.tradeName || "",
-                    companyName: personDataFromApi.companyName || "",
-                    cnpj: personDataFromApi.cnpj || "",
-                    phoneNumber: personDataFromApi.phoneNumber || "",
-                });
+                const response = await getPersonById(userId);
+                console.log("Dados recebidos da API:", response);
+                if (response) {
+                    const fullData = {
+                        ...response,
+                    };
+                    setFormData(fullData);
+                    setInitialEmail(response.user?.email || "");
+                    setAssociatedUserId(response.user?.id || ""); // Guarda o ID do usuário
+                } else {
+                    setError("Pessoa não encontrada.");
+                }
             } catch (err) {
-                console.error("Erro ao buscar dados:", err);
                 setError("Não foi possível carregar os dados para edição.");
             } finally {
                 setLoading(false);
             }
         };
-
-        if (userId) {
-            fetchPersonData();
-        }
+        fetchPersonData();
     }, [userId]);
 
+    // const handleChange = (e) => {
+    //     const { name, value } = e.target;
+    //     setFormData((prev) => ({ ...prev, [name]: value }));
+    // };
+
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //     setError("");
+    //     setIsSubmitting(true);
+
+    //     try {
+    //         // O payload de atualização contém apenas os dados da pessoa, sem o email
+    //         await updatePerson(userId, formData);
+    //         alert("Dados atualizados com sucesso!");
+    //         navigate("/admin/pessoas");
+    //     } catch (err) {
+    //         console.error("Erro ao atualizar pessoa:", err);
+    //         setError("Falha ao atualizar dados. Tente novamente.");
+    //     } finally {
+    //         setIsSubmitting(false);
+    //     }
+    // };
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
-        setIsSubmitting(true);
+
+        // 1. Monta o payload para os dados da PESSOA (person)
+        const personPayload = {
+            personType: formData.personType,
+            phoneNumber: formData.phoneNumber,
+        };
+
+        if (
+            formData.personType === "PF" ||
+            formData.personType === "F" ||
+            formData.personType === "A"
+        ) {
+            personPayload.name = formData.name;
+        }
+        if (formData.personType === "PF") {
+            personPayload.cpf = formData.cpf;
+        }
+        if (formData.personType === "PJ") {
+            personPayload.tradeName = formData.tradeName;
+            personPayload.companyName = formData.companyName;
+            personPayload.cnpj = formData.cnpj;
+        }
 
         try {
-            // O payload de atualização contém apenas os dados da pessoa, sem o email
-            await updatePerson(userId, formData);
+            // 2. Atualiza os dados da pessoa
+            await updatePerson(userId, personPayload);
+
+            // 3. Se o email mudou, atualiza os dados do usuário
+            if (formData.email !== initialEmail && associatedUserId) {
+                await resetEmailPassword(associatedUserId, {
+                    email: formData.email,
+                });
+            }
+
             alert("Dados atualizados com sucesso!");
             navigate("/admin/pessoas");
         } catch (err) {
-            console.error("Erro ao atualizar pessoa:", err);
-            setError("Falha ao atualizar dados. Tente novamente.");
-        } finally {
-            setIsSubmitting(false);
+            console.error("Erro ao atualizar:", err);
+            navigate("/admin/pessoas");
+            setError("Falha ao atualizar dados.");
         }
     };
 
     if (loading) {
         return <p>Carregando dados...</p>;
     }
+    if (error) return <div style={{ color: "red" }}>{error}</div>;
+    if (!formData) return <div>Dados da pessoa não encontrados.</div>;
 
     return (
         <FormWrapper>
@@ -247,7 +314,6 @@ const EditPersonPage = () => {
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        required
                     />
                 </FormGroup>
 
@@ -257,13 +323,10 @@ const EditPersonPage = () => {
                     <CancelButton
                         type="button"
                         onClick={() => navigate("/admin/pessoas")}
-                        disabled={isSubmitting}
                     >
                         Cancelar
                     </CancelButton>
-                    <SubmitButton type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? "Salvando..." : "Salvar Alterações"}
-                    </SubmitButton>
+                    <SubmitButton type="submit">Salvar Alterações</SubmitButton>
                 </ButtonContainer>
             </Form>
         </FormWrapper>

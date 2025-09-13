@@ -13,6 +13,9 @@ export const getDocumentsByStage = async (projectId, stageId) => {
         const response = await api.get(
             `/document/project/${projectId}/stage/${stageId}`
         );
+
+        console.log("To recebendo: ", response.data);
+
         return response.data;
     } catch (error) {
         console.error(
