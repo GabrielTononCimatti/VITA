@@ -69,7 +69,7 @@ export const login = async (req, res) =>
 
 export const register = async (req, res) =>
 {
-    const {email, password} = req.body;
+    const {email, firebaseUID} = req.body;
 
     let preUser = await retrieveUser(req.params.id);
 
@@ -85,21 +85,11 @@ export const register = async (req, res) =>
         return res.status(409).send({message: "Usuário já registrado"});
     }
 
-    let userRecord;
-    try
-    {
-        userRecord = await auth.createUser({email, password});
-    }
-    catch(error)
-    {
-        console.log("\n\n"+error+"\n\n");
-        return res.status(400).send({message:error.message});
-    }
 
     let user =
         {
             email:  email,
-            firebaseUID: userRecord.uid,
+            firebaseUID: firebaseUID,
             active: true,
             activatedAt: firestore.FieldValue.serverTimestamp()
         }
