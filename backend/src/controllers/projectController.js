@@ -327,6 +327,9 @@ export const putProject = async (req, res) =>
 
     }
     if(project.expectedEndDate)
+        project.startDate = ISOToFirestore(project.startDate);
+
+    if(project.expectedEndDate)
         project.expectedEndDate=ISOToFirestore(project.expectedEndDate);
 
     try
