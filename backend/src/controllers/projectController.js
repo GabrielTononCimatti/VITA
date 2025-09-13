@@ -216,6 +216,8 @@ export const postProject = async (req, res) =>
 
     if(!project.startDate)
         project.startDate = firestore.FieldValue.serverTimestamp();
+    else
+        project.startDate = ISOToFirestore(project.startDate);
     project.endDate=null;
     project.expectedEndDate=ISOToFirestore(project.expectedEndDate);
     project.employeeID="users/"+req.currentUser.id;
