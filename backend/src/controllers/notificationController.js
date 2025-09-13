@@ -28,7 +28,7 @@ export const getNotification = async (req, res) =>
     if(notifications.length === 0)
     {
         console.log("\n\n"+"Nenhuma notificação encontrada"+"\n\n");
-        return res.status(400).send({message:"Nenhuma notificação encontrada".message});
+        return res.status(200).send({});
     }
 
     return res.status(200).send(notifications);
@@ -66,7 +66,7 @@ export const getReceivedNotifications = async (req, res) =>
     if(notifications.length === 0)
     {
         console.log("\n\n"+"Nenhuma notificação encontrada"+"\n\n");
-        return res.status(400).send({message:"Nenhuma notificação encontrada".message});
+        return res.status(200).send({});
     }
 
     return res.status(200).send(notifications);
@@ -103,7 +103,7 @@ export const getSendedNotifications = async (req, res) =>
     if(notifications.length === 0)
     {
         console.log("\n\n"+"Nenhuma notificação encontrada"+"\n\n");
-        return res.status(404).send({message:"Nenhuma notificação encontrada".message});
+        return res.status(200).send({});
     }
 
     return res.status(200).send(notifications);
@@ -128,7 +128,7 @@ export const getNotificationById = async (req, res) =>
     if(!notification)
     {
         console.log("\n\n"+"Nenhuma notificação encontrada"+"\n\n");
-        return res.status(404).send({message:"Nenhuma notificação encontrada".message});
+        return res.status(200).send({});
     }
 
     if(!isOnNotification(req.currentUser, notification) && !isAdmin(req.currentUser))
@@ -209,7 +209,7 @@ export const readNotification = async (req, res) =>
     if(!notification)
     {
         console.log("\n\n"+"Nenhuma notificação encontrada"+"\n\n");
-        return res.status(404).send({message:"Nenhuma notificação encontrada".message});
+        return res.status(200).send({});
     }
 
     if(notification.receiverID !== "users/"+req.currentUser.id && !isAdmin(req.currentUser))

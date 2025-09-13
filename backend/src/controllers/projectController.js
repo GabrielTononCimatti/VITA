@@ -56,8 +56,8 @@ export const getProject = async (req, res) =>
 
     if(projects.length === 0)
     {
-        console.log("\n\n"+"Nenhum projeto encontrado"+"\n\n");
-        return res.status(400).send({message:"Nenhum projeto encontrado"});
+        //console.log("\n\n"+"Nenhum projeto encontrado"+"\n\n");
+        return res.status(200).send({});
     }
 
     let resultados = [];
@@ -141,7 +141,7 @@ export const getProjectById = async (req, res) =>
     if(!project)
     {
         console.log("\n\n"+"Nenhum projeto encontrado"+"\n\n");
-        return res.status(400).send({message:"Nenhum projeto encontrado"});
+        return res.status(200).send({});
     }
 
     if(!isAdmin(req.currentUser) && !isOnProject(req.currentUser, project))
@@ -225,7 +225,7 @@ export const postProject = async (req, res) =>
     if(!project.stages || !Array.isArray(project.stages))
     {
         console.log("\n\n"+"Nenhuma etapa existente"+"\n\n");
-        return res.status(400).send({message:"Nenhuma etapa existente"});
+        return res.status(200).send({});
     }
 
     let currentStage;

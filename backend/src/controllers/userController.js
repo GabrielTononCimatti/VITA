@@ -25,7 +25,7 @@ export const getUser = async (req, res) =>
     if(users.length === 0)
     {
         console.log("\n\n"+"Nenhum usuário encontrado"+"\n\n");
-        return res.status(404).send({message:"Nenhum usuário encontrado"});
+        return res.status(200).send({});
     }
 
     return res.status(200).send(users);
@@ -54,7 +54,7 @@ export const getUserById = async (req, res) =>
     if(!user)
     {
         console.log("\n\n"+"Nenhum usuário encontrado"+"\n\n");
-        return res.status(404).send({message:"Nenhum usuário encontrado"});
+        return res.status(200).send({});
     }
 
     return res.status(200).send(user);

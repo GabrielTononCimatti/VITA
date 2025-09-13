@@ -34,7 +34,7 @@ export const getPerson = async (req, res) =>
     if(persons.length === 0)
     {
         console.log("\n\n"+"Nenhuma pessoa encontrada"+"\n\n");
-        return res.status(404).send({message:"Nenhuma pessoa encontrada"});
+        return res.status(200).send({});
     }
 
 
@@ -63,7 +63,7 @@ export const getPersonById = async (req, res) =>
     if(!person)
     {
         console.log("\n\n"+"Nenhuma pessoa encontrada"+"\n\n");
-        return res.status(404).send({message:"Nenhuma pessoa encontrada"});
+        return res.status(200).send({});
     }
 
     return res.status(200).send(person);
