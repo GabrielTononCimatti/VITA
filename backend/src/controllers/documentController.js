@@ -273,7 +273,7 @@ export const postDocument = async (req, res) =>
                         subject: "Adição de documento"
                     }
 
-                saveNotification(notification);
+                await saveNotification(notification);
             }
         }
         if(req.currentUser.userType === 'C')
@@ -290,7 +290,7 @@ export const postDocument = async (req, res) =>
                     subject: "Adição de documento"
                 }
 
-            saveNotification(notification);
+            await saveNotification(notification);
         }
 
 
@@ -381,7 +381,7 @@ export const postLink = async (req, res) =>
                         subject: "Adição de documento"
                     }
 
-                saveNotification(notification);
+                await saveNotification(notification);
             }
         }
         if(req.currentUser.userType === 'C')
@@ -398,7 +398,7 @@ export const postLink = async (req, res) =>
                     subject: "Adição de documento"
                 }
 
-            saveNotification(notification);
+            await saveNotification(notification);
         }
 
 

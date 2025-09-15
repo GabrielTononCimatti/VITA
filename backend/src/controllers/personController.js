@@ -161,8 +161,6 @@ export const requestChanges = async (req, res) =>
 
         if(fieldNames[i] === "name")
             fieldNamesTraduzidos[i]="Nome";
-        console.log(fieldNames[i])
-        console.log(fieldNamesTraduzidos[i])
     }
 
     for(let i=0; i<fieldNamesTraduzidos.length; i++){
@@ -185,7 +183,7 @@ export const requestChanges = async (req, res) =>
     for(let i = 0; i < admins.length; i++)
     {
         notification.receiverID = "users/"+admins[i].id;
-        saveNotification(notification);
+        await saveNotification(notification);
     }
 
     return res.status(200).send({message: "Solitação para mudança de dados enviada com sucesso"});
@@ -241,7 +239,12 @@ export const deletePersonById = async (req, res) =>
     {
         if (oldUser.firebaseUID)
         {
-            await auth.deleteUser(oldUser.firebaseUID);
+            try
+            {
+                await auth.deleteUser(oldUser.firebaseUID);
+            }
+            catch(error)
+            {}
         }
         await deleteUser(oldUser.id);
         await deletePerson(req.params.id);

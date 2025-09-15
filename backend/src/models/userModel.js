@@ -64,7 +64,7 @@ export const retrieveUser = async (input) =>
     if(!input)
         return null;
     let user;
-    if(input.length===20)
+    if(input.length<500)
     {
         let doc = await db.collection('users').doc(input).get();
         user = docToObject(doc);
@@ -75,7 +75,7 @@ export const retrieveUser = async (input) =>
         let snapshot = await db.collection('users').where('firebaseUID', '==', firebaseUID).limit(1).get()
         user = snapshotToArray(snapshot)[0];
     }
-    if(user.activatedAt)
+    if(user && user.activatedAt)
         user.activatedAt = firestoreToISO(user.activatedAt);
     return user;
 }

@@ -15,7 +15,7 @@ const router = express.Router();
 //GET
 router.get('/', authenticate, getUser);
 router.get('/firebase', authenticate, login);
-router.get('/:id', authenticate, getUserById);
+router.get('/:id', getUserById);
 
 //REGISTER
 router.post('/register/:id', register);

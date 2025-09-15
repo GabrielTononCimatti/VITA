@@ -277,7 +277,7 @@ export const postProject = async (req, res) =>
                 subject: "Criação de projeto"
             }
 
-        saveNotification(notification);
+        await saveNotification(notification);
     }
 
     return res.status(201).send({message: "Projeto criado com sucesso"});
@@ -365,7 +365,7 @@ export const putProject = async (req, res) =>
                 subject: "Edição de projeto"
             }
 
-        saveNotification(notification);
+        await saveNotification(notification);
     }
 
 
@@ -414,7 +414,7 @@ export const deleteProjectById = async (req, res) =>
                 subject: "Remoção de projeto"
             }
 
-        saveNotification(notification);
+        await saveNotification(notification);
     }
 
     return res.status(200).send({message: "Projeto removido com sucesso"});
@@ -491,7 +491,7 @@ export const deleteStageById = async (req, res) =>
                 subject: "Remoção de etapa"
             }
 
-        saveNotification(notification);
+        await saveNotification(notification);
     }
 
     return res.status(200).send({message: "Etapa removida com sucesso"});
@@ -600,7 +600,7 @@ export const advanceStage = async (req, res) =>
             notification.subject = "Conclusão do projeto";
         }
 
-        saveNotification(notification);
+        await saveNotification(notification);
     }
 
     if(project.status !== "Finalizado")
@@ -712,7 +712,7 @@ export const returnStage = async (req, res) =>
             notification.subject = "Regressão de etapa";
         }
 
-        saveNotification(notification);
+        await saveNotification(notification);
     }
 
     return res.status(200).send({message: "Etapa do projeto "+Oldproject.name+" regredida com sucesso"});

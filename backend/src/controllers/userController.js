@@ -34,11 +34,6 @@ export const getUser = async (req, res) =>
 
 export const getUserById = async (req, res) =>
 {
-    if(!isAdmin(req.currentUser) && !isEmployee(req.currentUser) && req.currentUser.id !== req.params.id)
-    {
-        console.log("\n\n"+"Erro 403: Forbidden. Acesso negado"+"\n\n");
-        return res.status(403).send({message: "Erro 403: Forbidden. Acesso negado"});
-    }
 
     let user
     try
@@ -116,7 +111,7 @@ export const register = async (req, res) =>
             subject: "Registro de usuário"
         }
 
-    saveNotification(notification);
+    await saveNotification(notification);
 
 
     return res.status(201).send({message: "Cadastro finalizado com sucesso"});
@@ -184,7 +179,7 @@ export const editEmailOrPassword = async (req, res) =>
             subject: "Edição de dados"
         }
 
-    saveNotification(notification);
+    await saveNotification(notification);
 
 
     return res.status(200).send({message: "Dados do usuário editados com sucesso."});
@@ -229,7 +224,7 @@ export const putUser = async (req, res) =>
             subject: "Edição de dados"
         }
 
-    saveNotification(notification);
+    await saveNotification(notification);
 
 
     return res.status(200).send({message: "Dados do usuário editados com sucesso."});

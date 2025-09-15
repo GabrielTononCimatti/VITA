@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import {updateProjectStatus} from './src/controllers/cronJob.js';
 
 import documentRoutes from './src/routes/documentRoutes.js';
 import notificationRoutes from "./src/routes/notificationRoutes.js";
@@ -23,7 +24,7 @@ server.use('/person', personRoutes);
 server.use('/project', projectRoutes);
 server.use('/user', userRoutes);
 
-
+updateProjectStatus;
 
 server.listen(PORT, () => {
     console.log("\n\n ╔════════════════════════════════╗");
