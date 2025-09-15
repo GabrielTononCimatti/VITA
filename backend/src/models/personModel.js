@@ -101,8 +101,8 @@ export const validatePerson = (person, allFieldRequired) =>
             case 'PJ':
                 if(person.cnpj == null)
                     throw new Error("'cnpj' não pode ser null ou undefined");
-                if(person.companyName == null)
-                    throw new Error("'companyName' não pode ser null ou undefined")
+                if(person.tradeName == null)
+                    throw new Error("'tradeName' não pode ser null ou undefined")
                 break;
         }
     }

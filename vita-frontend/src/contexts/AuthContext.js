@@ -39,7 +39,8 @@ export const AuthProvider = ({ children }) => {
                     const fullUserData = {
                         ...userData,
                         ...personData,
-                        id: userData.id, // Garante que o ID principal seja o do nosso banco (coleção users)
+                        id: userData.id, //
+                        currentPersonID: personData.id,// Garante que o ID principal seja o do nosso banco (coleção users)
                         role: mapUserTypeToRole(userData.userType), // Mapeia A -> admin, F -> employee, C -> client
                     };
 

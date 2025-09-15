@@ -196,7 +196,7 @@ const CreatePersonPage = () => {
         try {
             const response = await createPerson(payload);
             if (response && response.userID) {
-                const link = `http://localhost:3001/?preUserID=${response.userID}`;
+                const link = `http://localhost:3000/register?preUserID=${response.userID}`;
                 setRegistrationLink(link);
             } else {
                 setError(

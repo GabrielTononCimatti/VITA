@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAuth } from "../../../contexts/AuthContext";
-import { requestPersonChanges } from "../../../services/peopleService";
+import { requestPersonChanges, updatePerson } from "../../../services/peopleService";
 import { resetEmailPassword } from "../../../services/userService";
 import _ from "lodash";
 
@@ -288,14 +288,12 @@ const ProfilePage = () => {
     //     }
     // };
 
-    const handleRequestChanges = async (e) => {
+
+    const handlePersonSubmit = async (e) => {
         e.preventDefault();
 
-        // CORREÇÃO: Monta um objeto plano com as alterações
         const changesPayload = Object.keys(personForm)
-            .filter(
-                (key) => !_.isEqual(personForm[key], initialPersonData[key])
-            )
+            .filter((key) => !_.isEqual(personForm[key], initialPersonData[key]))
             .reduce((acc, key) => {
                 acc[key] = personForm[key];
                 return acc;
@@ -307,13 +305,21 @@ const ProfilePage = () => {
         }
 
         try {
-            await requestPersonChanges(changesPayload);
-            alert(
-                "Sua solicitação de alteração foi enviada para um administrador!"
-            );
-            setInitialPersonData(personForm); // Atualiza o estado base para evitar reenvios
+            if (user.personType === "A") {
+
+                changesPayload.personType = user.personType;
+                await updatePerson(user.currentPersonID, changesPayload);
+                alert("Dados pessoais atualizados com sucesso!");
+                setInitialPersonData(personForm);
+                window.location.reload();
+            } else {
+
+                await requestPersonChanges(changesPayload);
+                alert("Sua solicitação de alteração foi enviada para um administrador!");
+                setInitialPersonData(personForm);
+            }
         } catch (error) {
-            alert("Falha ao enviar solicitação.");
+            alert("Falha ao atualizar dados pessoais.");
         }
     };
 
@@ -353,19 +359,20 @@ const ProfilePage = () => {
         <ProfileWrapper>
             <Title>Meu Perfil</Title>
 
-            <FormSection onSubmit={handleRequestChanges}>
+            <FormSection onSubmit={handlePersonSubmit}>
                 <SectionTitle>Informações Pessoais</SectionTitle>
-                <p
-                    style={{
-                        fontSize: "14px",
-                        color: "#666",
-                        marginTop: "-10px",
-                        marginBottom: "20px",
-                    }}
-                >
-                    Qualquer alteração aqui será enviada para aprovação de um
-                    administrador.
-                </p>
+                {user.personType !== "A" &&
+                    <p
+                        style={{
+                            fontSize: "14px",
+                            color: "#666",
+                            marginTop: "-10px",
+                            marginBottom: "20px",
+                        }}
+                    >
+                        Qualquer alteração aqui será enviada para aprovação de um
+                        administrador.
+                    </p>}
                 <FormGroup>
                     <Label>Telefone</Label>
                     <Input
@@ -430,7 +437,9 @@ const ProfilePage = () => {
                         </FormGroup>
                     </>
                 )}
-                <Button type="submit">Solicitar Alteração</Button>
+                <Button type="submit">
+                    {user.personType === "A" ? "Salvar Dados Pessoais" : "Solicitar Alterações"}
+                </Button>
             </FormSection>
 
             <FormSection onSubmit={handleAccountSubmit}>
