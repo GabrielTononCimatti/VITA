@@ -109,9 +109,10 @@ const AdminSearchPage = () => {
         const fetchData = async () => {
             try {
                 const projectsData = await getAllProjects();
-                setProjects(projectsData || []);
+                setProjects(Array.isArray(projectsData) ? projectsData : []);
             } catch (err) {
                 setError("Não foi possível carregar os projetos.");
+                setProjects([]);
             } finally {
                 setLoading(false);
             }
@@ -129,6 +130,10 @@ const AdminSearchPage = () => {
     };
 
     const filteredProjects = useMemo(() => {
+        if (!Array.isArray(projects) || projects.length === 0) {
+            return [];
+        }
+
         return projects.filter((item) => {
             const { project, client, employee } = item;
 
@@ -186,10 +191,10 @@ const AdminSearchPage = () => {
                 <FilterLabel>
                     <input
                         type="checkbox"
-                        value="Atrasado"
+                        value="Em atraso"
                         onChange={handleStatusFilterChange}
                     />
-                    Atrasado
+                    Em atraso
                 </FilterLabel>
                 <FilterLabel>
                     <input

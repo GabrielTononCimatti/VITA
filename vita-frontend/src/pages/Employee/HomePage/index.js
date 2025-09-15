@@ -162,7 +162,7 @@ const HomePage = () => {
                 <StatCard
                     title="Seus Projetos Concluídos"
                     count={projectStats.completed}
-                    color="#2E8B57"
+                    color="#05c85aff"
                 />
             </StatsContainer>
             <RecentProjects>

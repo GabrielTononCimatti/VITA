@@ -107,6 +107,7 @@ const AdminHomePage = () => {
             } catch (err) {
                 console.error(err);
                 setError("Não foi possível carregar os dados.");
+                setProjects([]);
             } finally {
                 setLoading(false);
             }
@@ -115,6 +116,10 @@ const AdminHomePage = () => {
     }, []);
 
     const projectStats = useMemo(() => {
+        if (!Array.isArray(projects) || projects.length === 0) {
+            return { inProgress: 0, delayed: 0, completed: 0 };
+        }
+
         return projects.reduce(
             (acc, item) => {
                 // LÓGICA ATUALIZADA: Acessa o status dentro de item.project
@@ -132,6 +137,10 @@ const AdminHomePage = () => {
     }, [projects]);
 
     const recentProjects = useMemo(() => {
+        if (!Array.isArray(projects) || projects.length === 0) {
+            return [];
+        }
+
         return projects
             .slice()
             .sort(
@@ -165,7 +174,7 @@ const AdminHomePage = () => {
                 <StatCard
                     title="Projetos Concluídos"
                     count={projectStats.completed}
-                    color="#2E8B57"
+                    color="#05c85aff"
                 />
             </CardsContainer>
             <Title as="h2" style={{ fontSize: "24px" }}>
