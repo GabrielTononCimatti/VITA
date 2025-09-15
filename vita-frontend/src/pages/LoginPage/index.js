@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import {getAuth, signInWithEmailAndPassword} from "firebase/auth";
 
 // Estilização do componente com styled-components
 const LoginWrapper = styled.div`
@@ -100,6 +101,14 @@ const LoginPage = () => {
         setError("");
         console.log("Tentando fazer login...");
         try {
+            let auth = getAuth();
+            let user = (await signInWithEmailAndPassword(auth, email, password)).user;
+            console.log(user.emailVerified);
+            if(!user.emailVerified)
+            {
+                setError("Falha no login. Email não confirmado.");
+                return;
+            }
             await login(email, password);
 
             console.log("Login bem-sucedido!");
@@ -135,11 +144,12 @@ const LoginPage = () => {
                 <ForgotPasswordLink
                     onClick={() =>
                         (window.location.href =
-                            "http://localhost:3001/forgot-password")
+                            "http://localhost:3000/forgot-password")
                     }
                 >
                     Esqueci minha senha
                 </ForgotPasswordLink>
+                {error && ( <p style={{ color: "red", textAlign: "center", marginTop: "24px"}}>{error}</p>)}
             </LoginForm>
         </LoginWrapper>
     );

@@ -14,9 +14,15 @@ const AuthContext = createContext({});
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const location = useLocation();
+    const excludedRoutes = ["/register", "/action", "/verify-email", "/forgot-password", "/reset-password"];
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            if (excludedRoutes.includes(location.pathname)) {
+                setLoading(false);
+                return;
+            }
             if (firebaseUser) {
                 // Usuário autenticado no Firebase. Agora buscamos seus dados no nosso backend.
                 try {

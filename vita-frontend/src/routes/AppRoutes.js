@@ -7,6 +7,11 @@ import ClientLayout from "../pages/Client/ClientLayout";
 import AdminLayout from "../pages/Admin/AdminLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RegistrationPage from "../pages/RegistrationPage";
+import ActionHandler from "../pages/ActionHandler";
+import Register from "../pages/Register";
+import VerifyEmail from "../pages/VerifyEmail";
+import ForgotPassword from "../pages/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword";
 
 const AppRoutes = () => {
     return (
@@ -14,10 +19,11 @@ const AppRoutes = () => {
             <AuthProvider>
                 <Routes>
                     <Route path="/login" element={<LoginPage />} />
-                    <Route
-                        path="/register/:token"
-                        element={<RegistrationPage />}
-                    />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/action" element={<ActionHandler />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
                     {/* Rota Protegida para Funcionário */}
                     <Route
