@@ -150,6 +150,8 @@ const DocumentsPage = () => {
             const stageID = `projects/${projectId}/stages/${etapaId}`;
 
             if (uploadType === "link") {
+                if(!formData.name)
+                    formData.name=formData.url
                 await addDocumentLink({
                     name: formData.name,
                     url: formData.url,

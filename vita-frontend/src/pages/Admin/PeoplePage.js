@@ -147,6 +147,7 @@ const PeoplePage = () => {
     // 1. O estado agora armazena uma única lista de pessoas
     const [allPeople, setAllPeople] = useState([]);
     const [activeTab, setActiveTab] = useState("clients");
+    const [activeTabName, setActiveTabName] = useState("Clientes");
     const [searchTerm, setSearchTerm] = useState("");
 
     const [loading, setLoading] = useState(true);
@@ -216,27 +217,36 @@ const PeoplePage = () => {
             <TabsContainer>
                 <TabButton
                     active={activeTab === "clients"}
-                    onClick={() => setActiveTab("clients")}
+                    onClick={() => {
+                        setActiveTab("clients");
+                        setActiveTabName("clientes");
+                    }}
                 >
                     Clientes
                 </TabButton>
                 <TabButton
                     active={activeTab === "employees"}
-                    onClick={() => setActiveTab("employees")}
+                    onClick={() => {
+                        setActiveTab("employees");
+                        setActiveTabName("funcionários");
+                    }}
                 >
                     Funcionários
                 </TabButton>
                 <TabButton
                     active={activeTab === "admins"}
-                    onClick={() => setActiveTab("admins")}
+                    onClick={() => {
+                        setActiveTab("admins");
+                        setActiveTabName("administradores");
+                    }}
                 >
-                    Admins
+                    Administradores
                 </TabButton>
             </TabsContainer>
 
             <SearchInput
                 type="text"
-                placeholder={`Pesquisar em ${activeTab}...`}
+                placeholder={`Pesquisar em ${activeTabName}...`}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />

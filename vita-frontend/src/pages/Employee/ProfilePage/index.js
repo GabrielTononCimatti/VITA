@@ -11,7 +11,7 @@ import { resetEmailPassword } from "../../../services/userService";
 import _ from "lodash";
 import {
     formatDocument,
-    formatPhoneNumber,
+    formatPhoneNumber, maskCNPJ, maskCPF, maskPhone,
     unmask,
 } from "../../../utils/peopleUtils";
 
@@ -268,11 +268,11 @@ const ProfilePage = () => {
         // Aplica a máscara correspondente ao campo
         let maskedValue = value;
         if (name === "cpf") {
-            maskedValue = formatDocument(value);
+            maskedValue = maskCPF(value);
         } else if (name === "cnpj") {
-            maskedValue = formatDocument(value);
+            maskedValue = maskCNPJ(value);
         } else if (name === "phoneNumber") {
-            maskedValue = formatPhoneNumber(value);
+            maskedValue = maskPhone(value);
         }
         setPersonForm({ ...personForm, [e.target.name]: maskedValue });
     };
@@ -331,6 +331,12 @@ const ProfilePage = () => {
                 setInitialPersonData(personForm);
                 window.location.reload();
             } else {
+                if(changesPayload.phoneNumber)
+                    changesPayload.phoneNumber=maskPhone(changesPayload.phoneNumber);
+                if(changesPayload.cpf)
+                    changesPayload.cpf=maskCPF(changesPayload.cpf);
+                if(changesPayload.cnpj)
+                    changesPayload.cnpj=maskCNPJ(changesPayload.cnpj);
                 await requestPersonChanges(changesPayload);
                 alert(
                     "Sua solicitação de alteração foi enviada para um administrador!"
@@ -403,6 +409,8 @@ const ProfilePage = () => {
                         name="phoneNumber"
                         value={personForm.phoneNumber || ""}
                         onChange={handlePersonChange}
+                        pattern="(\(?\d{2}\)?\s?\d{4,5}-?\d{4})|(0\d{3}-\d{3}-\d{4})"
+                        title="Digite um telefone válido (ex: (15) 99611-0650 ou 0800-727-1100)"
                     />
                 </FormGroup>
                 {(user.personType === "PF" ||
@@ -426,6 +434,8 @@ const ProfilePage = () => {
                             name="cpf"
                             value={personForm.cpf || ""}
                             onChange={handlePersonChange}
+                            pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}"   // regex for CPF format
+                            title="CPF deve ter 11 dígitos (ex: 123.456.789-00)"
                         />
                     </FormGroup>
                 )}
@@ -456,6 +466,8 @@ const ProfilePage = () => {
                                 name="cnpj"
                                 value={personForm.cnpj || ""}
                                 onChange={handlePersonChange}
+                                pattern="\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}"   // regex for CPF format
+                                title="CNPJ deve ter 14 dígitos (ex: 12.345.678/0001-99)"
                             />
                         </FormGroup>
                     </>

@@ -76,9 +76,41 @@ export const formatDocument = (doc) => {
 
 // NOVO: Funções de máscara para os inputs
 
+export const maskPhone = (value) => {
+    if (!value) return "";
+
+    // Só números e já corta no máximo 11 dígitos
+    let digits = value.replace(/\D/g, "").slice(0, 11);
+
+    //0800 / 0300 / 0500 / 0900 (até 11 dígitos)
+    if (/^(0800|0300|0500|0900)/.test(digits)) {
+        return digits.replace(/^(\d{4})(\d{3})(\d{0,4})$/, (m, p1, p2, p3) =>
+            p3 ? `${p1}-${p2}-${p3}` : `${p1}-${p2}`
+        );
+    }
+
+    //Telefones com DDD
+    if (digits.length <= 10) {
+        return digits.replace(/^(\d{0,2})(\d{0,4})(\d{0,4})$/, (m, ddd, p1, p2) => {
+            if (!ddd) return p1;
+            if (!p1) return `(${ddd}`;
+            if (!p2) return `(${ddd}) ${p1}`;
+            return `(${ddd}) ${p1}-${p2}`;
+        });
+    }
+
+    //Celular com 11 dígitos → (11) 91234-5678
+    if (digits.length === 11) {
+        return digits.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+    }
+
+    return digits;
+};
+
 export const maskCPF = (value) => {
     return value
         .replace(/\D/g, "")
+        .slice(0, 11)
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
@@ -87,6 +119,7 @@ export const maskCPF = (value) => {
 export const maskCNPJ = (value) => {
     return value
         .replace(/\D/g, "")
+        .slice(0, 14)
         .replace(/(\d{2})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d)/, "$1.$2")
         .replace(/(\d{3})(\d)/, "$1/$2")

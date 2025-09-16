@@ -395,7 +395,7 @@ const StepsPage = () => {
                                     description: s.description,
                                     order: s.order,
                                     // Corrigido: o campo é requiresDocuments
-                                    requiresDocuments: s.requiresDocuments,
+                                    requiresDocument: s.requiresDocument,
                                 };
                             }
                             return null;

@@ -156,18 +156,9 @@ const EditProjectPage = () => {
                     employeeID: stripRef(projectResponse.project.employeeID),
                 };
 
-                let expectedEndDate = new Date(formattedData.expectedEndDate);
 
-                expectedEndDate.setHours(expectedEndDate.getHours() - 0); // Adiciona uma hora
-
-                formattedData.expectedEndDate =
-                    formatISOToInputDate(expectedEndDate);
-
-                let startDate = new Date(formattedData.startDate);
-
-                startDate.setHours(startDate.getHours() - 0); // Adiciona uma hora
-
-                formattedData.startDate = formatISOToInputDate(startDate);
+                formattedData.startDate = formatISOToInputDate(formattedData.startDate);
+                formattedData.expectedEndDate = formatISOToInputDate(formattedData.expectedEndDate);
 
                 setProjectData(formattedData);
                 setInitialData(formattedData); // Salva o estado original

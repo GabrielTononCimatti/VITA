@@ -9,7 +9,7 @@ import {
     maskCPF,
     maskCNPJ,
     formatPhoneNumber,
-    unmask,
+    unmask, maskPhone,
 } from "../../utils/peopleUtils";
 
 // --- Styled Components (sem alterações) ---
@@ -190,7 +190,7 @@ const EditPersonPage = () => {
         } else if (name === "cnpj") {
             maskedValue = maskCNPJ(value);
         } else if (name === "phoneNumber") {
-            maskedValue = formatPhoneNumber(value);
+            maskedValue = maskPhone(value);
         }
 
         setFormData({ ...formData, [name]: maskedValue });
@@ -290,6 +290,8 @@ const EditPersonPage = () => {
                             name="cpf"
                             value={formData.cpf}
                             onChange={handleChange}
+                            pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}"   // regex for CPF format
+                            title="CPF deve ter 11 dígitos (ex: 123.456.789-00)"
                             required
                         />
                     </FormGroup>
@@ -323,6 +325,8 @@ const EditPersonPage = () => {
                                 name="cnpj"
                                 value={formData.cnpj}
                                 onChange={handleChange}
+                                pattern="\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}"   // regex for CPF format
+                                title="CNPJ deve ter 14 dígitos (ex: 12.345.678/0001-99)"
                                 required
                             />
                         </FormGroup>
@@ -336,6 +340,8 @@ const EditPersonPage = () => {
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
+                        pattern="(\(?\d{2}\)?\s?\d{4,5}-?\d{4})|(0\d{3}-\d{3}-\d{4})"
+                        title="Digite um telefone válido (ex: (15) 99611-0650 ou 0800-727-1100)"
                     />
                 </FormGroup>
 
