@@ -173,7 +173,7 @@ const AdminSearchPage = () => {
             <Controls>
                 <SearchInput
                     type="text"
-                    placeholder="Pesquisar por projeto, ID, cliente ou funcionário..."
+                    placeholder="Pesquisar por projeto, cliente ou funcionário..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />

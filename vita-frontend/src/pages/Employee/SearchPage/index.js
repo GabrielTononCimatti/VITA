@@ -182,7 +182,7 @@ const SearchPage = () => {
             <Controls>
                 <SearchInput
                     type="text"
-                    placeholder="Pesquisar em seus projetos por nome, ID ou cliente..."
+                    placeholder="Pesquisar em seus projetos por nome ou cliente..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />

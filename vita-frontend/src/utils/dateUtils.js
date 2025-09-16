@@ -40,3 +40,24 @@ export const formatISOToInputDate = (isoString) => {
         return "";
     }
 };
+
+/**
+ * NOVO: Formata uma data ISO para o padrão brasileiro (dd/MM/yyyy) para exibição.
+ * @param {string} isoString - A data em formato ISO String.
+ * @returns {string} A data formatada ou "N/A" se a entrada for inválida.
+ */
+export const formatDateToBrazilian = (isoString) => {
+    if (!isoString) {
+        return "N/A";
+    }
+    try {
+        const date = new Date(isoString);
+        // toLocaleDateString com o locale 'pt-BR' e timezone ajustado
+        return date.toLocaleDateString("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+        });
+    } catch (error) {
+        console.error("Erro ao formatar data para o padrão brasileiro:", error);
+        return "Data inválida";
+    }
+};

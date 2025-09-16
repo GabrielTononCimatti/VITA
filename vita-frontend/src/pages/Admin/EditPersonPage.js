@@ -5,6 +5,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { getPersonById, updatePerson } from "../../services/peopleService";
 import { resetEmailPassword } from "../../services/userService";
+import {
+    maskCPF,
+    maskCNPJ,
+    formatPhoneNumber,
+    unmask,
+} from "../../utils/peopleUtils";
 
 // --- Styled Components (sem alterações) ---
 const FormWrapper = styled.div`
@@ -132,6 +138,11 @@ const EditPersonPage = () => {
                 if (response) {
                     const fullData = {
                         ...response,
+                        cpf: maskCPF(response.cpf || ""),
+                        cnpj: maskCNPJ(response.cnpj || ""),
+                        phoneNumber: formatPhoneNumber(
+                            response.phoneNumber || ""
+                        ),
                     };
                     setFormData(fullData);
                     setInitialEmail(response.user?.email || "");
@@ -171,7 +182,18 @@ const EditPersonPage = () => {
     //     }
     // };
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+
+        let maskedValue = value;
+        if (name === "cpf") {
+            maskedValue = maskCPF(value);
+        } else if (name === "cnpj") {
+            maskedValue = maskCNPJ(value);
+        } else if (name === "phoneNumber") {
+            maskedValue = formatPhoneNumber(value);
+        }
+
+        setFormData({ ...formData, [name]: maskedValue });
     };
 
     const handleSubmit = async (e) => {
@@ -180,7 +202,7 @@ const EditPersonPage = () => {
         // 1. Monta o payload para os dados da PESSOA (person)
         const personPayload = {
             personType: formData.personType,
-            phoneNumber: formData.phoneNumber,
+            phoneNumber: unmask(formData.phoneNumber),
         };
 
         if (
@@ -191,12 +213,12 @@ const EditPersonPage = () => {
             personPayload.name = formData.name;
         }
         if (formData.personType === "PF") {
-            personPayload.cpf = formData.cpf;
+            personPayload.cpf = unmask(formData.cpf);
         }
         if (formData.personType === "PJ") {
             personPayload.tradeName = formData.tradeName;
             personPayload.companyName = formData.companyName;
-            personPayload.cnpj = formData.cnpj;
+            personPayload.cnpj = unmask(formData.cnpj);
         }
 
         try {

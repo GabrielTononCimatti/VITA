@@ -3,9 +3,17 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import { useAuth } from "../../../contexts/AuthContext";
-import { requestPersonChanges, updatePerson } from "../../../services/peopleService";
+import {
+    requestPersonChanges,
+    updatePerson,
+} from "../../../services/peopleService";
 import { resetEmailPassword } from "../../../services/userService";
 import _ from "lodash";
+import {
+    formatDocument,
+    formatPhoneNumber,
+    unmask,
+} from "../../../utils/peopleUtils";
 
 // --- Styled Components (Preservados e adaptados) ---
 const ProfileWrapper = styled.div`
@@ -242,12 +250,12 @@ const ProfilePage = () => {
     useEffect(() => {
         if (user) {
             const personData = {
-                phoneNumber: user.phoneNumber || "",
+                phoneNumber: formatPhoneNumber(user.phoneNumber) || "",
                 name: user.name || "",
-                cpf: user.cpf || "",
+                cpf: formatDocument(user.cpf) || "",
                 tradeName: user.tradeName || "",
                 companyName: user.companyName || "",
-                cnpj: user.cnpj || "",
+                cnpj: formatDocument(user.cnpj) || "",
             };
             setPersonForm(personData);
             setInitialPersonData(personData);
@@ -256,7 +264,17 @@ const ProfilePage = () => {
     }, [user]);
 
     const handlePersonChange = (e) => {
-        setPersonForm({ ...personForm, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        // Aplica a máscara correspondente ao campo
+        let maskedValue = value;
+        if (name === "cpf") {
+            maskedValue = formatDocument(value);
+        } else if (name === "cnpj") {
+            maskedValue = formatDocument(value);
+        } else if (name === "phoneNumber") {
+            maskedValue = formatPhoneNumber(value);
+        }
+        setPersonForm({ ...personForm, [e.target.name]: maskedValue });
     };
 
     const handleAccountChange = (e) => {
@@ -288,14 +306,15 @@ const ProfilePage = () => {
     //     }
     // };
 
-
     const handlePersonSubmit = async (e) => {
         e.preventDefault();
 
         const changesPayload = Object.keys(personForm)
-            .filter((key) => !_.isEqual(personForm[key], initialPersonData[key]))
+            .filter(
+                (key) => !_.isEqual(personForm[key], initialPersonData[key])
+            )
             .reduce((acc, key) => {
-                acc[key] = personForm[key];
+                acc[key] = unmask(personForm[key]);
                 return acc;
             }, {});
 
@@ -306,16 +325,16 @@ const ProfilePage = () => {
 
         try {
             if (user.personType === "A") {
-
                 changesPayload.personType = user.personType;
                 await updatePerson(user.currentPersonID, changesPayload);
                 alert("Dados pessoais atualizados com sucesso!");
                 setInitialPersonData(personForm);
                 window.location.reload();
             } else {
-
                 await requestPersonChanges(changesPayload);
-                alert("Sua solicitação de alteração foi enviada para um administrador!");
+                alert(
+                    "Sua solicitação de alteração foi enviada para um administrador!"
+                );
                 setInitialPersonData(personForm);
             }
         } catch (error) {
@@ -361,7 +380,7 @@ const ProfilePage = () => {
 
             <FormSection onSubmit={handlePersonSubmit}>
                 <SectionTitle>Informações Pessoais</SectionTitle>
-                {user.personType !== "A" &&
+                {user.personType !== "A" && (
                     <p
                         style={{
                             fontSize: "14px",
@@ -370,9 +389,10 @@ const ProfilePage = () => {
                             marginBottom: "20px",
                         }}
                     >
-                        Qualquer alteração aqui será enviada para aprovação de um
-                        administrador.
-                    </p>}
+                        Qualquer alteração aqui será enviada para aprovação de
+                        um administrador.
+                    </p>
+                )}
                 <FormGroup>
                     <Label>Telefone</Label>
                     <Input
@@ -438,7 +458,9 @@ const ProfilePage = () => {
                     </>
                 )}
                 <Button type="submit">
-                    {user.personType === "A" ? "Salvar Dados Pessoais" : "Solicitar Alterações"}
+                    {user.personType === "A"
+                        ? "Salvar Dados Pessoais"
+                        : "Solicitar Alterações"}
                 </Button>
             </FormSection>
 

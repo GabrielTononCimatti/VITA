@@ -5,6 +5,12 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { createPerson } from "../../services/peopleService";
 import { useAuth } from "../../contexts/AuthContext";
+import {
+    maskCPF,
+    maskCNPJ,
+    formatPhoneNumber,
+    unmask,
+} from "../../utils/peopleUtils";
 
 // Seus styled-components foram preservados
 const PageWrapper = styled.div`
@@ -112,7 +118,18 @@ const CreatePersonPage = () => {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setPersonData((prev) => ({ ...prev, [name]: value }));
+
+        let maskedValue = value;
+
+        if (name === "cpf") {
+            maskedValue = maskCPF(value);
+        } else if (name === "cnpj") {
+            maskedValue = maskCNPJ(value);
+        } else if (name === "phoneNumber") {
+            maskedValue = formatPhoneNumber(value);
+        }
+
+        setPersonData((prev) => ({ ...prev, [name]: maskedValue }));
     };
 
     const handleCopyLink = () => {
@@ -176,18 +193,18 @@ const CreatePersonPage = () => {
         // NOVO: Construção do payload limpo
         const payload = {
             personType: personData.personType,
-            phoneNumber: personData.phoneNumber,
+            phoneNumber: unmask(personData.phoneNumber),
             createdBy: `users/${user.id}`,
         };
 
         if (personData.personType === "PF") {
             payload.name = personData.name;
-            payload.cpf = personData.cpf;
+            payload.cpf = unmask(personData.cpf);
         } else if (personData.personType === "PJ") {
             payload.tradeName = personData.tradeName;
             if (personData.companyName)
                 payload.companyName = personData.companyName; // Só envia se não for vazio
-            payload.cnpj = personData.cnpj;
+            payload.cnpj = unmask(personData.cnpj);
         } else {
             // Para Funcionário (F) e Admin (A)
             payload.name = personData.name;

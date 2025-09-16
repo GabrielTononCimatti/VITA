@@ -73,7 +73,7 @@ const StatusBadge = styled.span`
         switch (status) {
             case "Em andamento":
                 return "#6c757d";
-            case "Atrasado":
+            case "Em atraso":
                 return "#ffc107";
             case "Finalizado":
                 return "#28a745";
@@ -187,7 +187,7 @@ const ClientSearchPage = () => {
             <Controls>
                 <SearchInput
                     type="text"
-                    placeholder="Pesquisar em seus projetos por nome ou ID..."
+                    placeholder="Pesquisar em seus projetos por nome do projeto"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -205,10 +205,10 @@ const ClientSearchPage = () => {
                 <FilterLabel>
                     <input
                         type="checkbox"
-                        value="Atrasado"
+                        value="Em atraso"
                         onChange={handleStatusFilterChange}
                     />
-                    Atrasado
+                    Em atraso
                 </FilterLabel>
                 <FilterLabel>
                     <input

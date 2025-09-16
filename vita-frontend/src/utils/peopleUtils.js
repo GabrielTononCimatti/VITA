@@ -30,7 +30,7 @@ export const getDisplayName = (person) => {
  * @returns {string} O número formatado ou o original se a formatação falhar.
  */
 export const formatPhoneNumber = (phoneNumber) => {
-    if (!phoneNumber || typeof phoneNumber !== "string") return "N/A";
+    if (!phoneNumber || typeof phoneNumber !== "string") return "";
     const cleaned = phoneNumber.replace(/\D/g, "");
 
     // Formato 0800 (11 dígitos)
@@ -72,4 +72,43 @@ export const formatDocument = (doc) => {
     }
 
     return doc; // Retorna o original se não corresponder
+};
+
+// NOVO: Funções de máscara para os inputs
+
+export const maskCPF = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+};
+
+export const maskCNPJ = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/(\d{2})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1/$2")
+        .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+};
+
+export const maskPhoneNumber = (value) => {
+    return value
+        .replace(/\D/g, "")
+        .replace(/(\d{2})(\d)/, "($1) $2")
+        .replace(/(\d{5})(\d{4})$/, "$1-$2");
+};
+
+// NOVO: Função para remover a máscara antes de enviar para o backend
+export const unmask = (value) => {
+    if (!value) return "";
+
+    // Se contém apenas dígitos + caracteres de formatação (espaço, ponto, traço, parêntese, barra)
+    if (/^[\d\s.\-()/]+$/.test(value)) {
+        return value.replace(/\D/g, ""); // mantém só os números
+    }
+
+    // Caso tenha letras ou outros caracteres, retorna como está
+    return value;
 };

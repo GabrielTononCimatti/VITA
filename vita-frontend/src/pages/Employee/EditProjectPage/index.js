@@ -151,9 +151,23 @@ const EditProjectPage = () => {
 
                 const formattedData = {
                     ...projectResponse.project,
+
                     clientID: stripRef(projectResponse.project.clientID),
                     employeeID: stripRef(projectResponse.project.employeeID),
                 };
+
+                let expectedEndDate = new Date(formattedData.expectedEndDate);
+
+                expectedEndDate.setHours(expectedEndDate.getHours() - 0); // Adiciona uma hora
+
+                formattedData.expectedEndDate =
+                    formatISOToInputDate(expectedEndDate);
+
+                let startDate = new Date(formattedData.startDate);
+
+                startDate.setHours(startDate.getHours() - 0); // Adiciona uma hora
+
+                formattedData.startDate = formatISOToInputDate(startDate);
 
                 setProjectData(formattedData);
                 setInitialData(formattedData); // Salva o estado original
@@ -224,8 +238,6 @@ const EditProjectPage = () => {
             );
         }
 
-        console.log("Mudanças detectadas:", changes.expectedEndDate);
-
         // Formata os IDs para o backend
         if (changes.clientID) changes.clientID = `persons/${changes.clientID}`;
         if (changes.employeeID)
@@ -292,7 +304,8 @@ const EditProjectPage = () => {
                         id="startDate"
                         name="startDate"
                         type="date"
-                        value={formatISOToInputDate(projectData.startDate)}
+                        value={projectData.startDate}
+                        max={formatISOToInputDate(new Date().toISOString())}
                         onChange={handleChange}
                         required
                     />
@@ -307,10 +320,7 @@ const EditProjectPage = () => {
                         id="expectedEndDate"
                         name="expectedEndDate"
                         type="date"
-                        value={
-                            formatISOToInputDate(projectData.expectedEndDate) ||
-                            ""
-                        }
+                        value={projectData.expectedEndDate}
                         onChange={handleChange}
                     />
                 </FormGroup>

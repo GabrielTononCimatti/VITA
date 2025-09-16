@@ -6,6 +6,7 @@ import styled from "styled-components";
 import { getAllPeople } from "../../../services/peopleService";
 import { useAuth } from "../../../contexts/AuthContext";
 import { getDisplayName } from "../../../utils/peopleUtils";
+import { formatISOToInputDate } from "../../../utils/dateUtils";
 
 // --- Styled Components (Preservando seu estilo) ---
 const PageWrapper = styled.div`
@@ -200,6 +201,7 @@ const CreateProjectPage = () => {
                         name="startDate"
                         type="date"
                         value={projectData.startDate}
+                        max={formatISOToInputDate(new Date().toISOString())}
                         onChange={handleChange}
                         required
                     />
