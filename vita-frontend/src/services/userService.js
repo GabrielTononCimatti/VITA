@@ -34,7 +34,7 @@ export const updateUser = async (userId, userData) => {
  */
 export const resetEmailPassword = async (userId, credentials) => {
     try {
-        const response = await api.put(
+        const response = await api.post(
             `/user/resetemailpassword/${userId}`,
             credentials
         );

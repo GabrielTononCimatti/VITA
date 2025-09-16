@@ -353,6 +353,9 @@ const ProfilePage = () => {
         }
 
         const payload = {};
+
+        payload.email = user.email;
+
         if (accountForm.email !== user.email) payload.email = accountForm.email;
         if (accountForm.password) payload.password = accountForm.password;
 
