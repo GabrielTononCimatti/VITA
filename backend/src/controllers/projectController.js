@@ -366,6 +366,14 @@ export const putProject = async (req, res) =>
             }
         }
 
+        for (let i = 0; i < stages.length; i++)
+        {
+            if (!stages[i].id)
+            {
+                newStages.push(stages[i]);
+            }
+        }
+
         for (let i = 0; i < newStages.length; i++) {
             if (newStages[i].order < posicaoAtual)
                 newStages[i].status = "Finalizada";
