@@ -332,6 +332,60 @@ export const putProject = async (req, res) =>
     if(project.expectedEndDate)
         project.expectedEndDate=ISOToFirestore(project.expectedEndDate);
 
+    let OldStages = Oldproject.stages;
+    let stages = project.stages;
+    let newStages = []
+
+    let posicaoAtual = null;
+    let idDaPosicao = null
+    OldStages.sort((a, b) => a.order - b.order);
+    stages.sort((a, b) => a.order - b.order);
+
+
+
+
+    for(let i=0; i<OldStages.length; i++)
+    {
+        if(OldStages[i].status === "Em andamento")
+            idDaPosicao = OldStages[i].id;
+        newStages[i]={};
+        newStages[i].id = OldStages[i].id;
+        newStages[i].order = OldStages[i].order;
+        newStages[i].status = OldStages[i].status;
+        for (let j=0; j<stages.length; j++)
+        {
+            if(stages[j].id === newStages[i].id)
+            {
+                newStages[i]=stages[j];
+            }
+        }
+    }
+    newStages.sort((a, b) => a.order - b.order);
+
+
+    for(let i=0; i<newStages.length; i++)
+    {
+        if(newStages[i].id === idDaPosicao) {
+            newStages[i].status = "Em andamento";
+            posicaoAtual = newStages[i].order;
+        }
+    }
+
+    for(let i=0; i<newStages.length; i++)
+    {
+        if(newStages[i].order < posicaoAtual)
+            newStages[i].status = "Finalizada";
+
+        if(newStages[i].order > posicaoAtual)
+            newStages[i].status = "Não iniciada";
+
+        if(newStages[i].order === posicaoAtual)
+            newStages[i].status = "Em andamento";
+    }
+
+
+    project.stages=newStages;
+
     try
     {
         await editProject(req.params.id, project);
