@@ -210,7 +210,7 @@ const PeoplePage = () => {
             <PageHeader>
                 <Title>Pessoas</Title>
                 <ActionButton onClick={() => navigate("/admin/pessoas/novo")}>
-                    Novo Utilizador
+                    Nova Pessoa
                 </ActionButton>
             </PageHeader>
 
