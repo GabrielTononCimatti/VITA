@@ -115,7 +115,7 @@ const HomePage = () => {
                 const status = item.project?.status || "";
                 if (status === "Finalizado") {
                     acc.completed++;
-                } else if (status === "Atrasado") {
+                } else if (status === "Em atraso") {
                     acc.delayed++;
                 } else if (status === "Em andamento") {
                     acc.inProgress++;
