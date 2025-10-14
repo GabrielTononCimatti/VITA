@@ -1,13 +1,12 @@
-// Caminho: vita-frontend/src/pages/Employee/SearchPage/index.js
-
 import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { getAllProjects } from "../../../services/projectService";
 import { getDisplayName } from "../../../utils/peopleUtils";
-import { useAuth } from "../../../contexts/AuthContext"; // Para pegar o funcionário logado
+import { useAuth } from "../../../contexts/AuthContext";
 import ProjectNotificationsPanel from "../../../components/layout/ProjectNotificationsPanel";
 import { FaBell } from "react-icons/fa";
+import Pagination from "../../../components/layout/Pagination";
 
 // --- Styled Components (Preservados) ---
 const SearchContainer = styled.div`
@@ -110,6 +109,8 @@ const SearchPage = () => {
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [selectedProject, setSelectedProject] = useState(null);
     const [error, setError] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         const fetchData = async () => {
@@ -166,6 +167,12 @@ const SearchPage = () => {
             );
         });
     }, [employeeProjects, searchTerm, statusFilters]);
+
+    const currentProjects = useMemo(() => {
+        const indexOfLastItem = currentPage * itemsPerPage;
+        const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+        return filteredProjects.slice(indexOfFirstItem, indexOfLastItem);
+    }, [filteredProjects, currentPage, itemsPerPage]);
 
     const handleNotificationClick = (project, e) => {
         e.stopPropagation();
@@ -228,7 +235,7 @@ const SearchPage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredProjects.map((item) => (
+                        {currentProjects.map((item) => (
                             <tr
                                 key={item.project.id}
                                 onClick={() =>
@@ -271,6 +278,12 @@ const SearchPage = () => {
                     </tbody>
                 </StyledTable>
             </TableWrapper>
+            <Pagination
+                totalItems={filteredProjects.length}
+                itemsPerPage={itemsPerPage}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+            />
             {selectedProject && (
                 <ProjectNotificationsPanel
                     isOpen={isPanelOpen}
