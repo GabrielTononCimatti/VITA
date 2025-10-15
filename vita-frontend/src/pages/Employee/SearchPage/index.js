@@ -113,6 +113,10 @@ const SearchPage = () => {
     const itemsPerPage = 10;
 
     useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilters]);
+
+    useEffect(() => {
         const fetchData = async () => {
             try {
                 const projectsData = await getAllProjects();
