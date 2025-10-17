@@ -196,33 +196,30 @@ const ProjectPage = () => {
     }, [projectId]);
 
     const handleAdvanceStage = async () => {
-        if (
-            window.confirm(
-                "Tem certeza que deseja avançar para a próxima etapa?"
-            )
-        ) {
-            try {
-                await advanceProjectStage(projectId);
-                fetchProject();
-            } catch (err) {
-                alert("Erro ao avançar etapa.");
-            }
+        try {
+            await advanceProjectStage(projectId);
+            fetchProject();
+        } catch (err) {
+            alert("Erro ao avançar etapa.");
         }
     };
 
     const handleReturnStage = async () => {
-        const message =
-            projectData?.project?.status === "Finalizado"
-                ? "Este projeto está finalizado. Deseja reabri-lo na última etapa?"
-                : "Tem certeza que deseja retornar para a etapa anterior?";
-
-        if (window.confirm(message)) {
-            try {
+        try {
+            if (projectData?.project?.status === "Finalizado") {
+                const message =
+                    "Este projeto está finalizado. Deseja reabri-lo na última etapa?";
+                if (window.confirm(message)) {
+                    await returnProjectStage(projectId);
+                    fetchProject();
+                }
+            } else {
+                // Se o projeto não estiver finalizado, regride a etapa sem confirmação.
                 await returnProjectStage(projectId);
                 fetchProject();
-            } catch (err) {
-                alert("Erro ao retornar etapa.");
             }
+        } catch (err) {
+            alert("Erro ao retornar etapa.");
         }
     };
 
