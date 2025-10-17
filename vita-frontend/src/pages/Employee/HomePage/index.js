@@ -55,6 +55,21 @@ const Table = styled.table`
     }
 `;
 
+const ButtonsContainer = styled.div`
+    margin-top: ${({ theme }) => theme.spacing.large};
+    display: flex;
+    justify-content: center;
+`;
+
+const ActionButton = styled.button`
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 4px;
+    background-color: ${({ theme }) => theme.colors.primary};
+    color: white;
+`;
+
 const StatusBadge = styled.span`
     padding: 4px 8px;
     border-radius: 12px;
@@ -221,6 +236,13 @@ const HomePage = () => {
                         ))}
                     </tbody>
                 </Table>
+                <ButtonsContainer>
+                    <ActionButton
+                        onClick={() => navigate("/employee/pesquisa")}
+                    >
+                        Ver Todos os Projetos
+                    </ActionButton>
+                </ButtonsContainer>
             </RecentProjects>
             {selectedProject && (
                 <ProjectNotificationsPanel

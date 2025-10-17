@@ -75,6 +75,21 @@ const StatusBadge = styled.span`
     }};
 `;
 
+const ButtonsContainer = styled.div`
+    margin-top: ${({ theme }) => theme.spacing.large};
+    display: flex;
+    justify-content: center;
+`;
+
+const ActionButton = styled.button`
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 4px;
+    background-color: ${({ theme }) => theme.colors.primary};
+    color: white;
+`;
+
 // --- Helpers ---
 const stripRef = (ref) => {
     if (!ref || typeof ref !== "string") return null;
@@ -129,6 +144,17 @@ const ClientHomePage = () => {
         );
     }, [clientProjects]);
 
+    const recentProjects = useMemo(() => {
+        return clientProjects
+            .slice()
+            .sort(
+                (a, b) =>
+                    new Date(b.project.startDate) -
+                    new Date(a.project.startDate)
+            )
+            .slice(0, 5);
+    }, [clientProjects]);
+
     const handleNotificationClick = (project, e) => {
         e.stopPropagation();
         setSelectedProject(project); // Passa o objeto do projeto para o painel
@@ -171,7 +197,7 @@ const ClientHomePage = () => {
                     </thead>
                     <tbody>
                         {clientProjects.length > 0 ? (
-                            clientProjects.map((item) => (
+                            recentProjects.map((item) => (
                                 <tr
                                     key={item.project.id}
                                     onClick={() =>
@@ -226,6 +252,11 @@ const ClientHomePage = () => {
                         )}
                     </tbody>
                 </Table>
+                <ButtonsContainer>
+                    <ActionButton onClick={() => navigate("/client/pesquisa")}>
+                        Ver Todos os Projetos
+                    </ActionButton>
+                </ButtonsContainer>
             </RecentProjects>
             {selectedProject && (
                 <ProjectNotificationsPanel
