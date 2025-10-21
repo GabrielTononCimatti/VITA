@@ -149,21 +149,25 @@ const EditProjectPage = () => {
                     getAllPeople(),
                 ]);
 
-                const formattedData = {
+                const rawData = {
                     ...projectResponse.project,
-
                     clientID: stripRef(projectResponse.project.clientID),
                     employeeID: stripRef(projectResponse.project.employeeID),
                 };
+                setInitialData(rawData);
 
+                const formattedFormData = {
+                    ...rawData,
+                    startDate: formatISOToInputDate(rawData.startDate),
+                    expectedEndDate: formatISOToInputDate(
+                        rawData.expectedEndDate
+                    ),
+                };
+                setProjectData(formattedFormData);
 
-                formattedData.startDate = formatISOToInputDate(formattedData.startDate);
-                formattedData.expectedEndDate = formatISOToInputDate(formattedData.expectedEndDate);
-
-                setProjectData(formattedData);
-                setInitialData(formattedData); // Salva o estado original
                 setPeople(peopleData || []);
             } catch (error) {
+                console.error("Erro ao carregar dados para edição:", error);
                 alert("Erro ao carregar dados para edição.");
             } finally {
                 setLoading(false);
@@ -205,39 +209,51 @@ const EditProjectPage = () => {
             alert(
                 "A data de início não pode ser posterior à data de término prevista."
             );
-            return; // Impede o envio do formulário
+            return;
         }
 
         const changes = {};
-        // Compara o estado atual com o inicial e pega apenas o que mudou
+        // Compara o estado atual do formulário (projectData) com o inicial (initialData)
         Object.keys(projectData).forEach((key) => {
-            const initialValue =
-                key === "startDate" || key === "expectedEndDate"
-                    ? formatISOToInputDate(initialData[key])
-                    : initialData[key];
-            if (!_.isEqual(projectData[key], initialValue)) {
-                changes[key] = projectData[key];
+            let currentValue = projectData[key];
+            let initialValue = initialData[key];
+
+            // Tratamento especial para datas
+            if (key === "startDate" || key === "expectedEndDate") {
+                // Formata o valor inicial (ISO) para YYYY-MM-DD para comparar com o valor do formulário
+                const formattedInitialValue =
+                    formatISOToInputDate(initialValue);
+                // Compara os valores formatados YYYY-MM-DD
+                if (!_.isEqual(currentValue, formattedInitialValue)) {
+                    // Se mudou, converte o NOVO valor YYYY-MM-DD para ISO antes de enviar
+                    changes[key] = convertInputDateToISO(currentValue);
+                }
+            } else if (key === "clientID" || key === "employeeID") {
+                // Compara os IDs "stripped"
+                if (!_.isEqual(currentValue, initialValue)) {
+                    // Adiciona o prefixo correto antes de enviar
+                    changes[key] =
+                        key === "clientID"
+                            ? `persons/${currentValue}`
+                            : `users/${currentValue}`;
+                }
+            } else if (!_.isEqual(currentValue, initialValue)) {
+                // Para outros campos, apenas adiciona se diferente
+                changes[key] = currentValue;
             }
         });
 
-        if (changes.startDate) {
-            changes.startDate = convertInputDateToISO(changes.startDate);
-        }
-        if (changes.expectedEndDate) {
-            changes.expectedEndDate = convertInputDateToISO(
-                changes.expectedEndDate
-            );
-        }
-
-        // Formata os IDs para o backend
-        if (changes.clientID) changes.clientID = `persons/${changes.clientID}`;
-        if (changes.employeeID)
-            changes.employeeID = `users/${changes.employeeID}`;
+        // Remove chaves 'stages' e 'id' se existirem em 'changes', pois não são editáveis aqui
+        delete changes.stages;
+        delete changes.id;
 
         if (Object.keys(changes).length === 0) {
             alert("Nenhuma alteração foi feita.");
             return;
         }
+
+        // Log para depuração
+        console.log("Enviando alterações:", changes);
 
         try {
             await updateProject(projectId, changes);
