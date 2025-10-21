@@ -1,5 +1,3 @@
-// Caminho: vita-frontend/src/pages/Admin/CreatePersonPage.js
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
@@ -9,10 +7,10 @@ import {
     maskCPF,
     maskCNPJ,
     formatPhoneNumber,
-    unmask, maskPhone,
+    unmask,
+    maskPhone,
 } from "../../utils/peopleUtils";
 
-// Seus styled-components foram preservados
 const PageWrapper = styled.div`
     max-width: 800px;
     margin: 0 auto;
@@ -99,18 +97,17 @@ const LinkInput = styled(Input)`
 
 const CreatePersonPage = () => {
     const navigate = useNavigate();
-    const { user } = useAuth(); // Pegamos o usuário logado para saber quem está criando
+    const { user } = useAuth();
 
     const [registrationLink, setRegistrationLink] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // NOVO: Estado inicial alinhado com a nova estrutura de dados
     const [personData, setPersonData] = useState({
-        personType: "PF", // Tipo de pessoa (PF, PJ, F, A)
+        personType: "PF",
         name: "",
         cpf: "",
-        tradeName: "", // Nome Fantasia
-        companyName: "", // Razão Social
+        tradeName: "",
+        companyName: "",
         cnpj: "",
         phoneNumber: "",
     });
@@ -137,60 +134,11 @@ const CreatePersonPage = () => {
         alert("Link copiado para a área de transferência!");
     };
 
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-    //     setError("");
-    //     setIsSubmitting(true);
-
-    //     const payload = {
-    //         personType: personData.personType,
-    //         phoneNumber: personData.phoneNumber,
-    //         createdBy: `users/${user.id}`,
-    //     };
-
-    //     if (personData.personType === "PF") {
-    //         payload.name = personData.name;
-    //         payload.cpf = personData.cpf;
-    //     } else if (personData.personType === "PJ") {
-    //         payload.tradeName = personData.tradeName;
-    //         payload.companyName = personData.companyName;
-    //         payload.cnpj = personData.cnpj;
-    //     } else {
-    //         payload.name = personData.name;
-    //     }
-
-    //     try {
-    //         const responseData = await createPerson(payload);
-
-    //         // Passo 1: Mostra a resposta completa no console para depuração
-    //         console.log("Resposta do backend:", responseData);
-
-    //         // Passo 2: Verifica se a resposta contém o link
-    //         if (responseData && responseData.userID) {
-    //             // Construímos o link completo do front-end
-    //             const link = `${window.location.origin}/register/${responseData.userID}`;
-    //             setRegistrationLink(link);
-    //         } else {
-    //             setError(
-    //                 "Pessoa criada, mas o ID de registro não foi retornado. Verifique o console."
-    //             );
-    //         }
-    //     } catch (err) {
-    //         console.error("Erro completo ao criar pessoa:", err);
-    //         // Mostra o erro da API para o admin no console
-    //         setError(
-    //             "Falha ao criar pessoa. Verifique os dados e tente novamente."
-    //         );
-    //     } finally {
-    //         setIsSubmitting(false);
-    //     }
-    // };
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
         setIsSubmitting(true);
 
-        // NOVO: Construção do payload limpo
         const payload = {
             personType: personData.personType,
             phoneNumber: unmask(personData.phoneNumber),
@@ -203,10 +151,9 @@ const CreatePersonPage = () => {
         } else if (personData.personType === "PJ") {
             payload.tradeName = personData.tradeName;
             if (personData.companyName)
-                payload.companyName = personData.companyName; // Só envia se não for vazio
+                payload.companyName = personData.companyName;
             payload.cnpj = unmask(personData.cnpj);
         } else {
-            // Para Funcionário (F) e Admin (A)
             payload.name = personData.name;
         }
 
@@ -229,7 +176,6 @@ const CreatePersonPage = () => {
         }
     };
 
-    // Se o link foi gerado, mostramos a tela de sucesso
     if (registrationLink) {
         return (
             <PageWrapper>
@@ -254,7 +200,6 @@ const CreatePersonPage = () => {
         );
     }
 
-    // Senão, mostramos o formulário de criação
     return (
         <PageWrapper>
             <Title>Criar Nova Pessoa (Pré-cadastro)</Title>
@@ -272,8 +217,6 @@ const CreatePersonPage = () => {
                         <option value="A">Administrador</option>
                     </Select>
                 </FormGroup>
-
-                {/* O campo de EMAIL foi REMOVIDO daqui */}
 
                 {(personData.personType === "PF" ||
                     personData.personType === "F" ||
@@ -298,7 +241,7 @@ const CreatePersonPage = () => {
                             name="cpf"
                             value={personData.cpf}
                             onChange={handleChange}
-                            pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}"   // regex for CPF format
+                            pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}"
                             title="CPF deve ter 11 dígitos (ex: 123.456.789-00)"
                             required
                         />
@@ -333,7 +276,7 @@ const CreatePersonPage = () => {
                                 name="cnpj"
                                 value={personData.cnpj}
                                 onChange={handleChange}
-                                pattern="\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}"   // regex for CPF format
+                                pattern="\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}"
                                 title="CNPJ deve ter 14 dígitos (ex: 12.345.678/0001-99)"
                                 required
                             />

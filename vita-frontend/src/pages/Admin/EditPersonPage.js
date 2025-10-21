@@ -1,5 +1,3 @@
-// Caminho: vita-frontend/src/pages/Admin/EditPersonPage.js
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
@@ -9,10 +7,10 @@ import {
     maskCPF,
     maskCNPJ,
     formatPhoneNumber,
-    unmask, maskPhone,
+    unmask,
+    maskPhone,
 } from "../../utils/peopleUtils";
 
-// --- Styled Components (sem alterações) ---
 const FormWrapper = styled.div`
     max-width: 800px;
     margin: 0 auto;
@@ -90,46 +88,16 @@ const CancelButton = styled(Button)`
     color: #333;
 `;
 
-// --- Componente da Página ---
 const EditPersonPage = () => {
     const navigate = useNavigate();
     const { userId } = useParams();
 
-    // O estado do formulário foi simplificado, removendo o email
     const [formData, setFormData] = useState(null);
     const [initialEmail, setInitialEmail] = useState("");
     const [associatedUserId, setAssociatedUserId] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // useEffect(() => {
-    //     const fetchPersonData = async () => {
-    //         try {
-    //             // A 'response' é o próprio objeto da pessoa
-    //             const personDataFromApi = await getPersonById(userId);
-
-    //             // Preenchemos o formulário diretamente com os dados recebidos
-    //             setFormData({
-    //                 personType: personDataFromApi.personType || "",
-    //                 name: personDataFromApi.name || "",
-    //                 cpf: personDataFromApi.cpf || "",
-    //                 tradeName: personDataFromApi.tradeName || "",
-    //                 companyName: personDataFromApi.companyName || "",
-    //                 cnpj: personDataFromApi.cnpj || "",
-    //                 phoneNumber: personDataFromApi.phoneNumber || "",
-    //             });
-    //         } catch (err) {
-    //             console.error("Erro ao buscar dados:", err);
-    //             setError("Não foi possível carregar os dados para edição.");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-
-    //     if (userId) {
-    //         fetchPersonData();
-    //     }
-    // }, [userId]);
     useEffect(() => {
         const fetchPersonData = async () => {
             try {
@@ -146,7 +114,7 @@ const EditPersonPage = () => {
                     };
                     setFormData(fullData);
                     setInitialEmail(response.user?.email || "");
-                    setAssociatedUserId(response.user?.id || ""); // Guarda o ID do usuário
+                    setAssociatedUserId(response.user?.id || "");
                 } else {
                     setError("Pessoa não encontrada.");
                 }
@@ -159,28 +127,6 @@ const EditPersonPage = () => {
         fetchPersonData();
     }, [userId]);
 
-    // const handleChange = (e) => {
-    //     const { name, value } = e.target;
-    //     setFormData((prev) => ({ ...prev, [name]: value }));
-    // };
-
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
-    //     setError("");
-    //     setIsSubmitting(true);
-
-    //     try {
-    //         // O payload de atualização contém apenas os dados da pessoa, sem o email
-    //         await updatePerson(userId, formData);
-    //         alert("Dados atualizados com sucesso!");
-    //         navigate("/admin/pessoas");
-    //     } catch (err) {
-    //         console.error("Erro ao atualizar pessoa:", err);
-    //         setError("Falha ao atualizar dados. Tente novamente.");
-    //     } finally {
-    //         setIsSubmitting(false);
-    //     }
-    // };
     const handleChange = (e) => {
         const { name, value } = e.target;
 
@@ -199,7 +145,6 @@ const EditPersonPage = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // 1. Monta o payload para os dados da PESSOA (person)
         const personPayload = {
             personType: formData.personType,
             phoneNumber: unmask(formData.phoneNumber),
@@ -222,10 +167,8 @@ const EditPersonPage = () => {
         }
 
         try {
-            // 2. Atualiza os dados da pessoa
             await updatePerson(userId, personPayload);
 
-            // 3. Se o email mudou, atualiza os dados do usuário
             if (formData.email !== initialEmail && associatedUserId) {
                 await resetEmailPassword(associatedUserId, {
                     email: formData.email,
@@ -265,8 +208,6 @@ const EditPersonPage = () => {
                     </Select>
                 </FormGroup>
 
-                {/* O campo de email foi REMOVIDO pois a API não fornece este dado */}
-
                 {(formData.personType === "PF" ||
                     formData.personType === "F" ||
                     formData.personType === "A") && (
@@ -290,7 +231,7 @@ const EditPersonPage = () => {
                             name="cpf"
                             value={formData.cpf}
                             onChange={handleChange}
-                            pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}"   // regex for CPF format
+                            pattern="\d{3}\.?\d{3}\.?\d{3}-?\d{2}"
                             title="CPF deve ter 11 dígitos (ex: 123.456.789-00)"
                             required
                         />
@@ -325,7 +266,7 @@ const EditPersonPage = () => {
                                 name="cnpj"
                                 value={formData.cnpj}
                                 onChange={handleChange}
-                                pattern="\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}"   // regex for CPF format
+                                pattern="\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}"
                                 title="CNPJ deve ter 14 dígitos (ex: 12.345.678/0001-99)"
                                 required
                             />

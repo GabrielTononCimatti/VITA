@@ -1,5 +1,3 @@
-// Caminho: vita-frontend/src/pages/Employee/EditProjectPage/index.js
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import styled from "styled-components";
@@ -13,15 +11,14 @@ import {
     formatISOToInputDate,
 } from "../../../utils/dateUtils";
 import { getDisplayName } from "../../../utils/peopleUtils";
-import _ from "lodash"; // Biblioteca para comparar objetos
+import _ from "lodash";
 
-// --- Styled Components (Preservados) ---
 const PageWrapper = styled.div`
     max-width: 900px;
     margin: 0 auto;
     padding: 24px;
 `;
-// ... (demais styled-components mantidos)
+
 const Title = styled.h1`
     color: ${({ theme }) => theme.colors.primary};
     margin-bottom: 32px;
@@ -97,13 +94,11 @@ const SubmitButton = styled(Button)`
     color: white;
 `;
 
-// --- Helpers ---
 const stripRef = (ref) => {
     if (!ref || typeof ref !== "string") return null;
     return ref.includes("/") ? ref.split("/").pop() : ref;
 };
 
-// --- Componente ---
 const EditProjectPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -114,33 +109,6 @@ const EditProjectPage = () => {
     const [people, setPeople] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // useEffect(() => {
-    //     const fetchInitialData = async () => {
-    //         try {
-    //             // Prioriza os dados que vieram da StepsPage
-    //             if (location.state?.projectData) {
-    //                 setProjectData(location.state.projectData);
-    //             } else {
-    //                 const data = await getProjectById(projectId);
-    //                 setProjectData({
-    //                     ...data.project,
-    //                     clientID: stripRef(data.project.clientID),
-    //                     employeeID: stripRef(data.project.employeeID),
-    //                 });
-    //                 setStagesData(data.project.stages);
-    //             }
-
-    //             const peopleData = await getAllPeople();
-    //             setPeople(peopleData || []);
-    //         } catch (error) {
-    //             console.error("Erro ao carregar dados:", error);
-    //             alert("Erro ao carregar dados para edição.");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-    //     fetchInitialData();
-    // }, [projectId]);
     useEffect(() => {
         const fetchInitialData = async () => {
             try {
@@ -191,12 +159,6 @@ const EditProjectPage = () => {
         setProjectData((prev) => ({ ...prev, [name]: value }));
     };
 
-    // const handleSubmit = (e) => {
-    //     e.preventDefault();
-    //     navigate(`/employee/projeto/${projectId}/editar-etapas`, {
-    //         state: { projectData, stagesData },
-    //     });
-    // };
     const handleSaveChanges = async (e) => {
         e.preventDefault();
 
@@ -213,37 +175,29 @@ const EditProjectPage = () => {
         }
 
         const changes = {};
-        // Compara o estado atual do formulário (projectData) com o inicial (initialData)
+
         Object.keys(projectData).forEach((key) => {
             let currentValue = projectData[key];
             let initialValue = initialData[key];
 
-            // Tratamento especial para datas
             if (key === "startDate" || key === "expectedEndDate") {
-                // Formata o valor inicial (ISO) para YYYY-MM-DD para comparar com o valor do formulário
                 const formattedInitialValue =
                     formatISOToInputDate(initialValue);
-                // Compara os valores formatados YYYY-MM-DD
                 if (!_.isEqual(currentValue, formattedInitialValue)) {
-                    // Se mudou, converte o NOVO valor YYYY-MM-DD para ISO antes de enviar
                     changes[key] = convertInputDateToISO(currentValue);
                 }
             } else if (key === "clientID" || key === "employeeID") {
-                // Compara os IDs "stripped"
                 if (!_.isEqual(currentValue, initialValue)) {
-                    // Adiciona o prefixo correto antes de enviar
                     changes[key] =
                         key === "clientID"
                             ? `persons/${currentValue}`
                             : `users/${currentValue}`;
                 }
             } else if (!_.isEqual(currentValue, initialValue)) {
-                // Para outros campos, apenas adiciona se diferente
                 changes[key] = currentValue;
             }
         });
 
-        // Remove chaves 'stages' e 'id' se existirem em 'changes', pois não são editáveis aqui
         delete changes.stages;
         delete changes.id;
 
@@ -252,7 +206,6 @@ const EditProjectPage = () => {
             return;
         }
 
-        // Log para depuração
         console.log("Enviando alterações:", changes);
 
         try {
@@ -306,7 +259,6 @@ const EditProjectPage = () => {
 
                 <FormGroup>
                     <Label htmlFor="startDate">Data de Início</Label>
-                    {/* CORREÇÃO: Formata a data para o input */}
                     <Input
                         id="startDate"
                         name="startDate"
@@ -322,7 +274,6 @@ const EditProjectPage = () => {
                     <Label htmlFor="expectedEndDate">
                         Data de Término (Prevista)
                     </Label>
-                    {/* CORREÇÃO: Formata a data para o input */}
                     <Input
                         id="expectedEndDate"
                         name="expectedEndDate"

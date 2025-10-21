@@ -1,5 +1,3 @@
-// Caminho: vita-frontend/src/pages/Employee/CreateProjectPage/index.js
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styled from "styled-components";
@@ -8,7 +6,6 @@ import { useAuth } from "../../../contexts/AuthContext";
 import { getDisplayName } from "../../../utils/peopleUtils";
 import { formatISOToInputDate } from "../../../utils/dateUtils";
 
-// --- Styled Components (Preservando seu estilo) ---
 const PageWrapper = styled.div`
     max-width: 900px;
     margin: 0 auto;
@@ -83,11 +80,10 @@ const SubmitButton = styled.button`
     cursor: pointer;
 `;
 
-// --- Componente ---
 const CreateProjectPage = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth(); // Para associar o funcionário logado
+    const { user } = useAuth();
 
     const [projectData, setProjectData] = useState(
         location.state?.projectData || {
@@ -147,10 +143,9 @@ const CreateProjectPage = () => {
             alert(
                 "A data de início não pode ser posterior à data de término prevista."
             );
-            return; // Impede o envio do formulário
+            return;
         }
 
-        // Passa os dados do projeto para a próxima página (StepsPage)
         navigate("/employee/novo-projeto/etapas", { state: { projectData } });
     };
 
