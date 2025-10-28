@@ -5,7 +5,7 @@ import { getAllProjects } from "../../../services/projectService";
 import { getDisplayName } from "../../../utils/peopleUtils";
 import { useAuth } from "../../../contexts/AuthContext";
 import ProjectNotificationsPanel from "../../../components/layout/ProjectNotificationsPanel";
-import { FaBell } from "react-icons/fa";
+import { FaBell, FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 import Pagination from "../../../components/layout/Pagination";
 
 // --- Styled Components (Preservados) ---
@@ -98,6 +98,24 @@ const FilterLabel = styled.label`
     cursor: pointer;
 `;
 
+const ThSortable = styled.th`
+    cursor: pointer;
+    &:hover {
+        background-color: #f1f1f1;
+    }
+`;
+
+// Componente auxiliar para renderizar o ícone de ordenação correto
+const SortIcon = ({ columnKey, sortConfig }) => {
+    if (sortConfig.key !== columnKey) {
+        return <FaSort size={12} style={{ marginLeft: "5px", opacity: 0.4 }} />;
+    }
+    if (sortConfig.direction === "ascending") {
+        return <FaSortUp size={12} style={{ marginLeft: "5px" }} />;
+    }
+    return <FaSortDown size={12} style={{ marginLeft: "5px" }} />;
+};
+
 // --- Componente da Página ---
 const SearchPage = () => {
     const navigate = useNavigate();
@@ -110,6 +128,10 @@ const SearchPage = () => {
     const [selectedProject, setSelectedProject] = useState(null);
     const [error, setError] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
+    const [sortConfig, setSortConfig] = useState({
+        key: "startDate",
+        direction: "descending",
+    }); // Ordenação inicial por data decrescente
     const itemsPerPage = 10;
 
     useEffect(() => {
@@ -130,7 +152,6 @@ const SearchPage = () => {
         fetchData();
     }, []);
 
-    // NOVO: Primeiro, filtramos os projetos do funcionário
     const employeeProjects = useMemo(() => {
         if (!allProjects.length || !user) return [];
         return allProjects.filter((item) =>
@@ -147,30 +168,115 @@ const SearchPage = () => {
         );
     };
 
-    // NOVO: A lógica de busca e filtro agora opera sobre a lista já filtrada de projetos do funcionário
-    const filteredProjects = useMemo(() => {
-        return employeeProjects.filter((item) => {
-            const { project, client } = item;
+    const handleSort = (key) => {
+        let direction = "ascending";
+        // Se clicar na mesma coluna, inverte a direção
+        if (sortConfig.key === key && sortConfig.direction === "ascending") {
+            direction = "descending";
+        }
+        setSortConfig({ key, direction });
+        setCurrentPage(1); // Reseta para a primeira página ao ordenar
+    };
 
+    // NOVO: A lógica de busca e filtro agora opera sobre a lista já filtrada de projetos do funcionário
+    // const filteredProjects = useMemo(() => {
+    //     return employeeProjects.filter((item) => {
+    //         const { project, client } = item;
+
+    //         if (
+    //             statusFilters.length > 0 &&
+    //             !statusFilters.includes(project.status)
+    //         ) {
+    //             return false;
+    //         }
+
+    //         const clientName = client ? getDisplayName(client.personData) : "";
+    //         const searchTermLower = searchTerm.toLowerCase();
+    //         if (searchTermLower === "") return true;
+
+    //         return (
+    //             project.name.toLowerCase().includes(searchTermLower) ||
+    //             project.id.toString().includes(searchTermLower) ||
+    //             (clientName &&
+    //                 clientName.toLowerCase().includes(searchTermLower))
+    //         );
+    //     });
+    // }, [employeeProjects, searchTerm, statusFilters]);
+
+    const filteredProjects = useMemo(() => {
+        if (!Array.isArray(allProjects) || allProjects.length === 0) {
+            return [];
+        }
+
+        // 1. Filtragem (como antes)
+        let filtered = allProjects.filter((item) => {
+            const { project, client, employee } = item;
             if (
                 statusFilters.length > 0 &&
                 !statusFilters.includes(project.status)
             ) {
                 return false;
             }
-
             const clientName = client ? getDisplayName(client.personData) : "";
             const searchTermLower = searchTerm.toLowerCase();
-            if (searchTermLower === "") return true;
 
             return (
+                searchTermLower === "" ||
                 project.name.toLowerCase().includes(searchTermLower) ||
                 project.id.toString().includes(searchTermLower) ||
                 (clientName &&
                     clientName.toLowerCase().includes(searchTermLower))
             );
         });
-    }, [employeeProjects, searchTerm, statusFilters]);
+
+        // 2. Ordenação
+        if (sortConfig.key) {
+            filtered.sort((a, b) => {
+                let aValue, bValue;
+
+                // Define os valores a serem comparados baseado na chave (key)
+                switch (sortConfig.key) {
+                    case "name":
+                        aValue = a.project.name?.toLowerCase() || "";
+                        bValue = b.project.name?.toLowerCase() || "";
+                        break;
+                    case "clientName":
+                        aValue = a.client
+                            ? getDisplayName(a.client.personData)?.toLowerCase()
+                            : "";
+                        bValue = b.client
+                            ? getDisplayName(b.client.personData)?.toLowerCase()
+                            : "";
+                        break;
+                    case "startDate": // Assumindo que startDate é uma string ISO válida
+                        aValue = a.project.startDate
+                            ? new Date(a.project.startDate)
+                            : new Date(0); // Data muito antiga se nula
+                        bValue = b.project.startDate
+                            ? new Date(b.project.startDate)
+                            : new Date(0);
+                        break;
+                    default: // Ordena por ID por padrão se a chave for inválida
+                        aValue = a.project.id;
+                        bValue = b.project.id;
+                }
+
+                // Lógica de comparação
+                if (aValue < bValue) {
+                    return sortConfig.direction === "ascending" ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === "ascending" ? 1 : -1;
+                }
+                return 0; // Se forem iguais
+            });
+        }
+
+        return filtered;
+        // Adicione sortConfig às dependências do useMemo
+    }, [allProjects, searchTerm, statusFilters, sortConfig]);
+
+    // O useMemo de currentProjects não precisa mudar, ele já opera sobre filteredProjects
 
     const currentProjects = useMemo(() => {
         const indexOfLastItem = currentPage * itemsPerPage;
@@ -230,10 +336,32 @@ const SearchPage = () => {
                 <StyledTable>
                     <thead>
                         <tr>
+                            {/* ID não ordenável neste exemplo */}
                             <th>ID</th>
-                            <th>Nome do Projeto</th>
-                            <th>Cliente</th>
-                            <th>Data de Início</th>
+                            <ThSortable onClick={() => handleSort("name")}>
+                                Nome do Projeto{" "}
+                                <SortIcon
+                                    columnKey="name"
+                                    sortConfig={sortConfig}
+                                />
+                            </ThSortable>
+                            <ThSortable
+                                onClick={() => handleSort("clientName")}
+                            >
+                                Cliente{" "}
+                                <SortIcon
+                                    columnKey="clientName"
+                                    sortConfig={sortConfig}
+                                />
+                            </ThSortable>
+                            {/* Adicionando ordenação por data */}
+                            <ThSortable onClick={() => handleSort("startDate")}>
+                                Data de Início{" "}
+                                <SortIcon
+                                    columnKey="startDate"
+                                    sortConfig={sortConfig}
+                                />
+                            </ThSortable>
                             <th>Status</th>
                             <th></th>
                         </tr>

@@ -1,17 +1,15 @@
-// Caminho: vita-frontend/src/pages/Admin/AdminSearchPage.js
-
 import React, { useState, useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { getAllProjects } from "../../services/projectService";
 import { getDisplayName } from "../../utils/peopleUtils";
 import Pagination from "../../components/layout/Pagination";
+import { FaSort, FaSortUp, FaSortDown } from "react-icons/fa";
 
-// --- Styled Components (mantidos) ---
 const SearchContainer = styled.div`
     padding: 24px;
 `;
-// ... (demais styled-components mantidos)
+
 const Title = styled.h1`
     color: ${({ theme }) => theme.colors.primary};
     margin-bottom: 24px;
@@ -81,6 +79,24 @@ const StatusBadge = styled.span`
     }};
 `;
 
+const ThSortable = styled.th`
+    cursor: pointer;
+    &:hover {
+        background-color: #f1f1f1;
+    }
+`;
+
+// Componente auxiliar para renderizar o ícone de ordenação correto
+const SortIcon = ({ columnKey, sortConfig }) => {
+    if (sortConfig.key !== columnKey) {
+        return <FaSort size={12} style={{ marginLeft: "5px", opacity: 0.4 }} />;
+    }
+    if (sortConfig.direction === "ascending") {
+        return <FaSortUp size={12} style={{ marginLeft: "5px" }} />;
+    }
+    return <FaSortDown size={12} style={{ marginLeft: "5px" }} />;
+};
+
 const FilterContainer = styled.div`
     display: flex;
     align-items: center;
@@ -107,6 +123,10 @@ const AdminSearchPage = () => {
     const [error, setError] = useState("");
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
+    const [sortConfig, setSortConfig] = useState({
+        key: "startDate",
+        direction: "descending",
+    });
 
     useEffect(() => {
         setCurrentPage(1);
@@ -136,31 +156,73 @@ const AdminSearchPage = () => {
         );
     };
 
+    const handleSort = (key) => {
+        let direction = "ascending";
+        // Se clicar na mesma coluna, inverte a direção
+        if (sortConfig.key === key && sortConfig.direction === "ascending") {
+            direction = "descending";
+        }
+        setSortConfig({ key, direction });
+        setCurrentPage(1); // Reseta para a primeira página ao ordenar
+    };
+
+    // const filteredProjects = useMemo(() => {
+    //     if (!Array.isArray(projects) || projects.length === 0) {
+    //         return [];
+    //     }
+
+    //     return projects.filter((item) => {
+    //         const { project, client, employee } = item;
+
+    //         // Filtro por status
+    //         if (
+    //             statusFilters.length > 0 &&
+    //             !statusFilters.includes(project.status)
+    //         ) {
+    //             return false;
+    //         }
+
+    //         // Filtro pela barra de pesquisa
+    //         const clientName = client ? getDisplayName(client.personData) : "";
+    //         const employeeName = employee
+    //             ? getDisplayName(employee.personData)
+    //             : "";
+    //         const searchTermLower = searchTerm.toLowerCase();
+    //         if (searchTermLower === "") return true;
+
+    //         return (
+    //             project.name.toLowerCase().includes(searchTermLower) ||
+    //             project.id.toString().includes(searchTermLower) ||
+    //             (clientName &&
+    //                 clientName.toLowerCase().includes(searchTermLower)) ||
+    //             (employeeName &&
+    //                 employeeName.toLowerCase().includes(searchTermLower))
+    //         );
+    //     });
+    // }, [projects, searchTerm, statusFilters]);
+
     const filteredProjects = useMemo(() => {
         if (!Array.isArray(projects) || projects.length === 0) {
             return [];
         }
 
-        return projects.filter((item) => {
+        // 1. Filtragem (como antes)
+        let filtered = projects.filter((item) => {
             const { project, client, employee } = item;
-
-            // Filtro por status
             if (
                 statusFilters.length > 0 &&
                 !statusFilters.includes(project.status)
             ) {
                 return false;
             }
-
-            // Filtro pela barra de pesquisa
             const clientName = client ? getDisplayName(client.personData) : "";
             const employeeName = employee
                 ? getDisplayName(employee.personData)
                 : "";
             const searchTermLower = searchTerm.toLowerCase();
-            if (searchTermLower === "") return true;
 
             return (
+                searchTermLower === "" ||
                 project.name.toLowerCase().includes(searchTermLower) ||
                 project.id.toString().includes(searchTermLower) ||
                 (clientName &&
@@ -169,7 +231,67 @@ const AdminSearchPage = () => {
                     employeeName.toLowerCase().includes(searchTermLower))
             );
         });
-    }, [projects, searchTerm, statusFilters]);
+
+        // 2. Ordenação
+        if (sortConfig.key) {
+            filtered.sort((a, b) => {
+                let aValue, bValue;
+
+                // Define os valores a serem comparados baseado na chave (key)
+                switch (sortConfig.key) {
+                    case "name":
+                        aValue = a.project.name?.toLowerCase() || "";
+                        bValue = b.project.name?.toLowerCase() || "";
+                        break;
+                    case "clientName":
+                        aValue = a.client
+                            ? getDisplayName(a.client.personData)?.toLowerCase()
+                            : "";
+                        bValue = b.client
+                            ? getDisplayName(b.client.personData)?.toLowerCase()
+                            : "";
+                        break;
+                    case "employeeName":
+                        aValue = a.employee
+                            ? getDisplayName(
+                                  a.employee.personData
+                              )?.toLowerCase()
+                            : "";
+                        bValue = b.employee
+                            ? getDisplayName(
+                                  b.employee.personData
+                              )?.toLowerCase()
+                            : "";
+                        break;
+                    case "startDate": // Assumindo que startDate é uma string ISO válida
+                        aValue = a.project.startDate
+                            ? new Date(a.project.startDate)
+                            : new Date(0); // Data muito antiga se nula
+                        bValue = b.project.startDate
+                            ? new Date(b.project.startDate)
+                            : new Date(0);
+                        break;
+                    default: // Ordena por ID por padrão se a chave for inválida
+                        aValue = a.project.id;
+                        bValue = b.project.id;
+                }
+
+                // Lógica de comparação
+                if (aValue < bValue) {
+                    return sortConfig.direction === "ascending" ? -1 : 1;
+                }
+                if (aValue > bValue) {
+                    return sortConfig.direction === "ascending" ? 1 : -1;
+                }
+                return 0; // Se forem iguais
+            });
+        }
+
+        return filtered;
+        // Adicione sortConfig às dependências do useMemo
+    }, [projects, searchTerm, statusFilters, sortConfig]);
+
+    // O useMemo de currentProjects não precisa mudar, ele já opera sobre filteredProjects
 
     const currentProjects = useMemo(() => {
         const indexOfLastItem = currentPage * itemsPerPage;
@@ -223,10 +345,41 @@ const AdminSearchPage = () => {
                 <StyledTable>
                     <thead>
                         <tr>
+                            {/* ID não ordenável neste exemplo */}
                             <th>ID</th>
-                            <th>Nome do Projeto</th>
-                            <th>Cliente</th>
-                            <th>Funcionário</th>
+                            <ThSortable onClick={() => handleSort("name")}>
+                                Nome do Projeto{" "}
+                                <SortIcon
+                                    columnKey="name"
+                                    sortConfig={sortConfig}
+                                />
+                            </ThSortable>
+                            <ThSortable
+                                onClick={() => handleSort("clientName")}
+                            >
+                                Cliente{" "}
+                                <SortIcon
+                                    columnKey="clientName"
+                                    sortConfig={sortConfig}
+                                />
+                            </ThSortable>
+                            <ThSortable
+                                onClick={() => handleSort("employeeName")}
+                            >
+                                Funcionário{" "}
+                                <SortIcon
+                                    columnKey="employeeName"
+                                    sortConfig={sortConfig}
+                                />
+                            </ThSortable>
+                            {/* Adicionando ordenação por data */}
+                            <ThSortable onClick={() => handleSort("startDate")}>
+                                Data de Início{" "}
+                                <SortIcon
+                                    columnKey="startDate"
+                                    sortConfig={sortConfig}
+                                />
+                            </ThSortable>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -253,6 +406,11 @@ const AdminSearchPage = () => {
                                               item.employee.personData
                                           )
                                         : "N/A"}
+                                </td>
+                                <td>
+                                    {new Date(
+                                        item.project.startDate
+                                    ).toLocaleDateString()}
                                 </td>
                                 <td>
                                     <StatusBadge status={item.project.status}>
