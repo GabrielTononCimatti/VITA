@@ -85,7 +85,8 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
         content: `Encontre seus projetos facilmente.\n\n
 * **Barra de Pesquisa:** Digite o nome ou ID do projeto para filtrar.\n
 * **Filtros de Status:** Selecione para ver apenas projetos com um status específico.\n
-* **Tabela de Projetos:** Lista dos seus projetos. Clique para ver detalhes.`,
+* **Tabela de Projetos:** Lista dos seus projetos. Clique para ver detalhes.\n
+* **Notificações de Projetos:** Receba alertas sobre atualizações nos seus projetos. Clique no ícone de sino para ver mais.`,
     },
     "/client/projeto": {
         // Chave genérica para a página de detalhes do projeto do cliente
@@ -108,7 +109,7 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
     * Clique em "Adicionar".`,
     },
     "/client/perfil": {
-        title: "Ajuda - Meu Perfil (Cliente)",
+        title: "Ajuda - Meu Perfil",
         content: `Gerencie seus dados pessoais e de acesso.\n\n
 * **Informações Pessoais:** Visualize seus dados cadastrais (nome/razão social, documento, telefone). Para alterar, modifique os campos desejados e clique em "Solicitar Alterações". Sua solicitação será enviada para aprovação de um administrador.\n
 * **Informações da Conta:** Altere seu email de login ou defina uma nova senha. Por segurança, ao salvar alterações aqui, você será desconectado.`,

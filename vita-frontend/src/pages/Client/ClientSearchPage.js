@@ -160,7 +160,6 @@ const ClientSearchPage = () => {
         fetchData();
     }, []);
 
-    // Primeiro, filtramos os projetos que pertencem a este cliente
     const clientProjects = useMemo(() => {
         if (!allProjects.length || !user || !user.personID) return [];
         const userPersonId = stripRef(user.personID);
@@ -180,43 +179,18 @@ const ClientSearchPage = () => {
 
     const handleSort = (key) => {
         let direction = "ascending";
-        // Se clicar na mesma coluna, inverte a direção
         if (sortConfig.key === key && sortConfig.direction === "ascending") {
             direction = "descending";
         }
         setSortConfig({ key, direction });
-        setCurrentPage(1); // Reseta para a primeira página ao ordenar
+        setCurrentPage(1);
     };
-
-    // Agora, a busca e os filtros operam sobre a lista de projetos do cliente
-    // const filteredProjects = useMemo(() => {
-    //     return clientProjects.filter((item) => {
-    //         const { project } = item;
-
-    //         if (
-    //             statusFilters.length > 0 &&
-    //             !statusFilters.includes(project.status)
-    //         ) {
-    //             return false;
-    //         }
-
-    //         const searchTermLower = searchTerm.toLowerCase();
-    //         if (searchTermLower === "") return true;
-
-    //         // O cliente só pode pesquisar por nome ou ID do projeto
-    //         return (
-    //             project.name.toLowerCase().includes(searchTermLower) ||
-    //             project.id.toString().includes(searchTermLower)
-    //         );
-    //     });
-    // }, [clientProjects, searchTerm, statusFilters]);
 
     const filteredProjects = useMemo(() => {
         if (!Array.isArray(allProjects) || allProjects.length === 0) {
             return [];
         }
 
-        // 1. Filtragem (como antes)
         let filtered = allProjects.filter((item) => {
             const { project, client, employee } = item;
             if (
@@ -361,8 +335,6 @@ const ClientSearchPage = () => {
                 <StyledTable>
                     <thead>
                         <tr>
-                            {/* ID não ordenável neste exemplo */}
-                            <th>ID</th>
                             <ThSortable onClick={() => handleSort("name")}>
                                 Nome do Projeto{" "}
                                 <SortIcon
@@ -400,7 +372,6 @@ const ClientSearchPage = () => {
                                     )
                                 }
                             >
-                                <td>{item.project.id}</td>
                                 <td>{item.project.name}</td>
                                 <td>
                                     {item.employee
