@@ -14,12 +14,12 @@ export const helpContent = {
     "/employee/pesquisa": {
         title: "Ajuda - Pesquisa de Projetos",
         content: `Utilize esta página para encontrar seus projetos.\n\n
-* **Barra de Pesquisa:** Digite o nome do projeto, ID ou nome do cliente para filtrar a lista.\n
+* **Barra de Pesquisa:** Digite o nome do projeto ou nome do cliente para filtrar a lista.\n
 * **Filtros de Status:** Marque as caixas para ver apenas projetos com status específicos (Em andamento, Em atraso, Finalizado).\n
-* **Tabela de Projetos:** Exibe os projetos encontrados. Clique em uma linha para ir para a página de detalhes do projeto.`,
+* **Tabela de Projetos:** Exibe os projetos encontrados. Clique em uma linha para ir para a página de detalhes do projeto.\n
+* **Notificações de Projetos:** Exibe as notificações relacionadas aos projetos. Clique em uma notificação para ver mais detalhes.`,
     },
     "/employee/projeto": {
-        // Chave genérica para a página de detalhes do projeto
         title: "Ajuda - Detalhes do Projeto",
         content: `Esta página mostra informações detalhadas sobre um projeto específico.\n\n
 * **Cabeçalho:** Contém o nome, ID do projeto e as datas de início e término (ou previsão).\n
@@ -66,17 +66,8 @@ Clique em "Salvar Alterações" para confirmar. Use "Cancelar" para voltar sem s
 * **Remover Etapa:** Clique na lixeira. Etapas já concluídas ou em andamento podem ter restrições.\n\n
 Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
     },
-    // Adicione mais rotas do funcionário aqui...
-    "/employee/projeto/:projectId/etapa/:etapaId/documentos": {
-        title: "Ajuda - Editar Documentos (Projeto Existente)",
-        content: `Gerencie os documentos de uma etapa de um projeto já existente.\n\n
-* **Adicionar Documento:** Clique em "Adicionar Documento" para fazer upload de um novo arquivo.\n
-* **Editando Documento:** Clique no ícone de lápis ao lado de um documento na lista para editar suas informações.\n
-* **Remover Documento:** Clique na lixeira para excluir um documento da lista.\n\n
-Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
-    },
     "/employee/perfil": {
-        title: "Ajuda - Meu Perfil (Funcionário)",
+        title: "Ajuda - Meu Perfil",
         content: `Gerencie seus dados pessoais e de acesso.\n\n
 * **Informações Pessoais:** Visualize seus dados cadastrais (nome, telefone). Para alterar, modifique os campos desejados e clique em "Solicitar Alterações". Sua solicitação será enviada para aprovação de um administrador.\n
 * **Informações da Conta:** Altere seu email de login ou defina uma nova senha. Por segurança, ao salvar alterações aqui, você será desconectado.`,
@@ -151,7 +142,7 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
         title: "Ajuda - Detalhes do Projeto",
         content: `Visualize detalhes e gerencie um projeto.\n\n
 * **Cabeçalho:** Nome, ID e datas do projeto.\n
-* **Linha do Tempo de Etapas:** Acompanhe o progresso pelas etapas. Clique nos ícones para ver detalhes da etapa.\n
+* **Linha do Tempo de Etapas:** Mostra todas as etapas do projeto. A etapa atual está destacada em azul, e as concluídas em verde. Você pode clicar em uma etapa para ver sua descrição abaixo.\n
 * **Informações Gerais:** Cliente, funcionário responsável e descrição.\n
 * **Detalhes da Etapa:** Descrição da etapa selecionada e botão para documentos, se aplicável.\n
 * **Ações (Botão):**\n

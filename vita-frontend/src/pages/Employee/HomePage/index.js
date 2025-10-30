@@ -185,7 +185,6 @@ const HomePage = () => {
                 <Table>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Nome do Projeto</th>
                             <th>Cliente</th>
                             <th>Data de Início</th>
@@ -203,7 +202,6 @@ const HomePage = () => {
                                     )
                                 }
                             >
-                                <td>{item.project.id}</td>
                                 <td>{item.project.name}</td>
                                 <td>
                                     {item.client

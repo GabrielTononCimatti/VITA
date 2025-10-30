@@ -187,7 +187,7 @@ const AdminHomePage = () => {
                             <th>Nome do Projeto</th>
                             <th>Cliente</th>
                             <th>Funcionário</th>
-                            <th>Data</th>
+                            <th>Data de Início</th>
                             <th>Status</th>
                         </tr>
                     </thead>
