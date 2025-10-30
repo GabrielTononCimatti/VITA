@@ -184,10 +184,10 @@ const AdminHomePage = () => {
                 <StyledTable>
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>Nome do Projeto</th>
                             <th>Cliente</th>
                             <th>Funcionário</th>
+                            <th>Data</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -197,7 +197,6 @@ const AdminHomePage = () => {
                                 key={item.project.id}
                                 onClick={() => handleRowClick(item.project.id)}
                             >
-                                <td>{item.project.id}</td>
                                 <td>{item.project.name}</td>
                                 <td>
                                     {item.client
@@ -209,6 +208,13 @@ const AdminHomePage = () => {
                                         ? getDisplayName(
                                               item.employee.personData
                                           )
+                                        : "N/A"}
+                                </td>
+                                <td>
+                                    {item.project.startDate
+                                        ? new Date(
+                                              item.project.startDate
+                                          ).toLocaleDateString()
                                         : "N/A"}
                                 </td>
                                 <td>

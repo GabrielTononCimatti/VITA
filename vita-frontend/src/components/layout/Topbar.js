@@ -189,28 +189,129 @@ const Topbar = () => {
     //     return null; // Nenhuma chave correspondente encontrada
     // }, [location.pathname]);
 
+    // const getHelpKey = useCallback(() => {
+    //     const pathname = location.pathname;
+
+    //     // Lista de padrões a serem testados (as chaves do seu helpContent)
+    //     // Damos prioridade às rotas mais específicas primeiro
+    //     const patterns = [
+    //         // Rotas com parâmetros mais específicos primeiro
+    //         "/employee/projeto/:projectId/editar-etapas",
+    //         "/employee/projeto/:projectId/editar",
+    //         "/employee/projeto/:projectId/etapa/:etapaId/documentos", // Documentos de Employee
+    //         "/admin/projeto/:projectId/etapa/:etapaId/documentos",
+    //         "/admin/pessoas/editar/:userId", // Editar pessoa Admin
+    //         "/client/projeto/:projectId/etapa/:etapaId/documentos", // Documentos de Cliente
+    //         // Adicione os caminhos exatos do perfil aqui
+    //         "/admin/perfil",
+    //         "/employee/perfil",
+    //         "/client/perfil",
+    //         // Rotas genéricas de projeto (se aplicável) - verificadas depois das específicas
+    //         "/admin/projeto/:projectId",
+    //         "/client/projeto/:projectId",
+    //         "/employee/projeto/:projectId",
+
+    //         // Rotas exatas depois
+    //         "/employee/inicio",
+    //         "/employee/pesquisa",
+    //         "/employee/novo-projeto",
+    //         "/employee/novo-projeto/etapas",
+    //         "/client/inicio",
+    //         "/client/pesquisa",
+    //         "/admin/inicio",
+    //         "/admin/pesquisa",
+    //         "/admin/pessoas",
+    //         "/admin/pessoas/novo",
+    //         // Rotas genéricas como '/documentos' se ainda precisar
+    //         // '/documentos', // Removido ou ajustado conforme necessidade
+    //     ];
+
+    //     // Adiciona as chaves que realmente existem no helpContent para verificar
+    //     const validPatterns = patterns.filter((p) => helpContent[p]);
+
+    //     for (const pattern of validPatterns) {
+    //         // Verifica se o padrão corresponde ao pathname atual
+    //         const match = matchPath(
+    //             { path: pattern, end: true }, // 'end: true' garante correspondência exata
+    //             pathname
+    //         );
+    //         console.log("---COMEÇOU---"); // Log para depuração
+    //         console.log("Current pathname:", pathname); // Log para depuração
+    //         console.log(`Checking pattern: ${pattern}, match:`, match); // Log para depuração
+
+    //         if (match) {
+    //             // Lógica especial para rotas genéricas como /documentos (SE AINDA FOR NECESSÁRIO)
+    //             if (
+    //                 // pattern ===
+    //                 //     "/employee/projeto/:projectId/etapa/:etapaId/documentos" ||
+    //                 // pattern ===
+    //                 //     "/client/projeto/:projectId/etapa/:etapaId/documentos" ||
+    //                 // pattern ===
+    //                 //     "/admin/projeto/:projectId/etapa/:etapaId/documentos"
+    //                 pattern.endsWith("/documentos")
+    //             ) {
+    //                 // Se você decidiu ter UMA chave genérica '/documentos' no helpContent.js:
+    //                 if (helpContent["/documentos"]) return "/documentos";
+    //                 // Se decidiu ter chaves específicas por role (ex: '/employee/documentos'):
+    //                 // const role = pathname.split('/')[1]; // employee ou client
+    //                 // const docKey = `/${role}/documentos`;
+    //                 // if (helpContent[docKey]) return docKey;
+    //             }
+
+    //             // Para as rotas de projeto, usamos a chave genérica '/admin/projeto', '/client/projeto' ou '/employee/projeto'
+    //             if (
+    //                 pattern.includes("/:projectId") &&
+    //                 !pattern.includes("/etapa/") &&
+    //                 !pattern.includes("/editar")
+    //             ) {
+    //                 const pathSegments = pathname.split("/").filter(Boolean);
+    //                 const role = pathSegments[0]; // admin, client ou employee
+    //                 const genericProjectKey = `/${role}/projeto`;
+    //                 if (helpContent[genericProjectKey])
+    //                     return genericProjectKey;
+    //             }
+
+    //             // REMOVIDO O BLOCO IF QUE TRATAVA '/perfil' GENERICAMENTE
+
+    //             // Retorna a chave exata que deu match (ex: '/admin/perfil', '/employee/projeto/:projectId/editar')
+    //             return pattern;
+    //         }
+    //     }
+
+    //     // Fallback se nenhuma correspondência for encontrada após iterar
+    //     const pathSegments = pathname.split("/").filter(Boolean);
+    //     // Se for uma página de projeto genérica (ex: /employee/projeto/ID), tenta a chave genérica
+    //     if (pathSegments.length === 3 && pathSegments[1] === "projeto") {
+    //         const genericKey = `/${pathSegments[0]}/projeto`;
+    //         if (helpContent[genericKey]) return genericKey;
+    //     }
+
+    //     return null; // Nenhuma chave correspondente encontrada
+    // }, [location.pathname]);
+
+    // Função para encontrar a chave de ajuda correta usando matchPath
     const getHelpKey = useCallback(() => {
         const pathname = location.pathname;
 
-        // Lista de padrões a serem testados (as chaves do seu helpContent)
-        // Damos prioridade às rotas mais específicas primeiro
+        // Lista de TODOS os padrões de rota que queremos reconhecer
         const patterns = [
-            // Rotas com parâmetros mais específicos primeiro
+            // 1. Rotas mais específicas primeiro (com mais segmentos)
+            "/admin/projeto/:projectId/etapa/:etapaId/documentos",
+            "/employee/projeto/:projectId/etapa/:etapaId/documentos",
+            "/client/projeto/:projectId/etapa/:etapaId/documentos",
             "/employee/projeto/:projectId/editar-etapas",
             "/employee/projeto/:projectId/editar",
-            "/employee/projeto/:projectId/etapa/:etapaId/documentos", // Documentos de Employee
-            "/admin/pessoas/editar/:userId", // Editar pessoa Admin
-            "/client/projeto/:projectId/etapa/:etapaId/documentos", // Documentos de Cliente
-            // Adicione os caminhos exatos do perfil aqui
-            "/admin/perfil",
-            "/employee/perfil",
-            "/client/perfil",
-            // Rotas genéricas de projeto (se aplicável) - verificadas depois das específicas
+            "/admin/pessoas/editar/:userId",
+
+            // 2. Rotas de detalhe de projeto (genéricas por ID)
             "/admin/projeto/:projectId",
             "/client/projeto/:projectId",
             "/employee/projeto/:projectId",
 
-            // Rotas exatas depois
+            // 3. Rotas exatas e de Perfil (específicas por role)
+            "/admin/perfil",
+            "/employee/perfil",
+            "/client/perfil",
             "/employee/inicio",
             "/employee/pesquisa",
             "/employee/novo-projeto",
@@ -221,70 +322,67 @@ const Topbar = () => {
             "/admin/pesquisa",
             "/admin/pessoas",
             "/admin/pessoas/novo",
-            // Rotas genéricas como '/documentos' se ainda precisar
-            // '/documentos', // Removido ou ajustado conforme necessidade
         ];
 
-        // Adiciona as chaves que realmente existem no helpContent para verificar
-        const validPatterns = patterns.filter((p) => helpContent[p]);
-
-        for (const pattern of validPatterns) {
-            // Verifica se o padrão corresponde ao pathname atual
-            const match = matchPath(
-                { path: pattern, end: true }, // 'end: true' garante correspondência exata
-                pathname
-            );
+        for (const pattern of patterns) {
+            // Tenta dar match no padrão com a URL atual
+            const match = matchPath({ path: pattern, end: true }, pathname);
 
             if (match) {
-                // Lógica especial para rotas genéricas como /documentos (SE AINDA FOR NECESSÁRIO)
+                // Se deu match, agora decidimos qual chave de conteúdo retornar
+
+                // CASO 1: É uma rota de documentos
                 if (
-                    pattern ===
-                        "/employee/projeto/:projectId/etapa/:etapaId/documentos" ||
-                    pattern ===
-                        "/client/projeto/:projectId/etapa/:etapaId/documentos"
+                    pattern.includes("/etapa/") &&
+                    pattern.endsWith("/documentos")
                 ) {
-                    // Se você decidiu ter UMA chave genérica '/documentos' no helpContent.js:
-                    if (helpContent["/documentos"]) return "/documentos";
-                    // Se decidiu ter chaves específicas por role (ex: '/employee/documentos'):
-                    // const role = pathname.split('/')[1]; // employee ou client
-                    // const docKey = `/${role}/documentos`;
-                    // if (helpContent[docKey]) return docKey;
+                    // Mapeia para a chave genérica '/documentos'
+                    if (helpContent["/documentos"]) {
+                        return "/documentos";
+                    }
                 }
 
-                // Para as rotas de projeto, usamos a chave genérica '/admin/projeto', '/client/projeto' ou '/employee/projeto'
+                // CASO 2: É uma rota de detalhe de projeto (sem /editar ou /etapa)
                 if (
                     pattern.includes("/:projectId") &&
                     !pattern.includes("/etapa/") &&
                     !pattern.includes("/editar")
                 ) {
-                    const pathSegments = pathname.split("/").filter(Boolean);
-                    const role = pathSegments[0]; // admin, client ou employee
+                    // Mapeia para a chave genérica por role (ex: '/admin/projeto')
+                    const role = pathname.split("/")[1]; // Pega admin, client ou employee
                     const genericProjectKey = `/${role}/projeto`;
-                    if (helpContent[genericProjectKey])
+                    if (helpContent[genericProjectKey]) {
                         return genericProjectKey;
+                    }
                 }
 
-                // REMOVIDO O BLOCO IF QUE TRATAVA '/perfil' GENERICAMENTE
+                // CASO 3: É uma rota exata ou específica (ex: '/admin/perfil', '/employee/projeto/:projectId/editar')
+                // Verifica se o próprio padrão (pattern) existe como chave no helpContent
+                if (helpContent[pattern]) {
+                    return pattern;
+                }
 
-                // Retorna a chave exata que deu match (ex: '/admin/perfil', '/employee/projeto/:projectId/editar')
-                return pattern;
+                // Se encontrou um match mas nenhuma chave de conteúdo foi encontrada,
+                // paramos aqui para não cair no fallback (ex: /admin/projeto/123 deu match, mas /admin/projeto não existe)
+                break;
             }
         }
 
-        // Fallback se nenhuma correspondência for encontrada após iterar
+        // FALLBACK: Se o loop terminar sem NENHUM matchPath
+        // Tenta a chave genérica de projeto (caso a URL seja /admin/projeto/ID e o padrão :projectId não tenha sido encontrado)
         const pathSegments = pathname.split("/").filter(Boolean);
-        // Se for uma página de projeto genérica (ex: /employee/projeto/ID), tenta a chave genérica
         if (pathSegments.length === 3 && pathSegments[1] === "projeto") {
             const genericKey = `/${pathSegments[0]}/projeto`;
             if (helpContent[genericKey]) return genericKey;
         }
 
         return null; // Nenhuma chave correspondente encontrada
-    }, [location.pathname]);
+    }, [location.pathname, helpContent]); // Adicionado helpContent às dependências
 
     // Atualiza o conteúdo da ajuda quando a rota muda
     useEffect(() => {
         const key = getHelpKey();
+        console.log("Help key determined:", key); // Log para depuração
         if (key && helpContent[key]) {
             setCurrentHelp(helpContent[key]);
         } else {

@@ -346,7 +346,6 @@ const AdminSearchPage = () => {
                     <thead>
                         <tr>
                             {/* ID não ordenável neste exemplo */}
-                            <th>ID</th>
                             <ThSortable onClick={() => handleSort("name")}>
                                 Nome do Projeto{" "}
                                 <SortIcon
@@ -393,7 +392,6 @@ const AdminSearchPage = () => {
                                     )
                                 }
                             >
-                                <td>{item.project.id}</td>
                                 <td>{item.project.name}</td>
                                 <td>
                                     {item.client

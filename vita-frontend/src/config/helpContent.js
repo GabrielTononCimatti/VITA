@@ -75,6 +75,12 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
 * **Remover Documento:** Clique na lixeira para excluir um documento da lista.\n\n
 Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
     },
+    "/employee/perfil": {
+        title: "Ajuda - Meu Perfil (Funcionário)",
+        content: `Gerencie seus dados pessoais e de acesso.\n\n
+* **Informações Pessoais:** Visualize seus dados cadastrais (nome, telefone). Para alterar, modifique os campos desejados e clique em "Solicitar Alterações". Sua solicitação será enviada para aprovação de um administrador.\n
+* **Informações da Conta:** Altere seu email de login ou defina uma nova senha. Por segurança, ao salvar alterações aqui, você será desconectado.`,
+    },
 
     // --- ROTAS DE CLIENTE ---
     "/client/inicio": {
@@ -110,7 +116,12 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
     * Insira a URL (para links) ou selecione o arquivo do seu computador.\n
     * Clique em "Adicionar".`,
     },
-    // Adicione mais rotas do cliente aqui...
+    "/client/perfil": {
+        title: "Ajuda - Meu Perfil (Cliente)",
+        content: `Gerencie seus dados pessoais e de acesso.\n\n
+* **Informações Pessoais:** Visualize seus dados cadastrais (nome/razão social, documento, telefone). Para alterar, modifique os campos desejados e clique em "Solicitar Alterações". Sua solicitação será enviada para aprovação de um administrador.\n
+* **Informações da Conta:** Altere seu email de login ou defina uma nova senha. Por segurança, ao salvar alterações aqui, você será desconectado.`,
+    },
 
     // --- ROTAS DE ADMIN ---
     "/admin/inicio": {
@@ -121,11 +132,11 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
 * **Botão "Ver Todos os Projetos":** Leva para a tela de pesquisa completa.`,
     },
     "/admin/pesquisa": {
-        title: "Ajuda - Pesquisa de Projetos",
+        title: "Ajuda - Todos os Projetos",
         content: `Visualize e filtre todos os projetos do sistema.\n\n
-* **Barra de Pesquisa:** Busque por nome do projeto, ID, nome do cliente ou nome do funcionário.\n
+* **Barra de Pesquisa:** Busque por nome do projeto, nome do cliente ou nome do funcionário.\n
 * **Filtros de Status:** Refine a busca pelo status atual do projeto.\n
-* **Tabela de Projetos:** Lista completa. Clique para ver detalhes.`,
+* **Tabela de Projetos:** Lista de todos os projetos. Clique para ver detalhes.`,
     },
     "/admin/pessoas": {
         title: "Ajuda - Gerenciamento de Pessoas",
@@ -133,14 +144,14 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
 * **Abas (Clientes, Funcionários, Administradores):** Navegue entre os tipos de usuário.\n
 * **Barra de Pesquisa:** Encontre pessoas por nome ou documento (CPF/CNPJ para clientes).\n
 * **Tabela de Pessoas:** Lista os usuários da aba selecionada. Clique em uma linha para editar os dados da pessoa.\n
-* **Botão "Nova Pessoa":** Inicia o processo de pré-cadastro de um novo usuário (cliente, funcionário ou admin).`,
+* **Botão "Nova Pessoa":** Inicia o processo de pré-cadastro de uma nova pessoa (cliente, funcionário ou admin).`,
     },
     "/admin/projeto": {
         // Chave genérica para a página de detalhes do projeto do admin
         title: "Ajuda - Detalhes do Projeto",
         content: `Visualize detalhes e gerencie um projeto.\n\n
 * **Cabeçalho:** Nome, ID e datas do projeto.\n
-* **Linha do Tempo de Etapas:** Acompanhe o progresso pelas etapas. Clique para ver detalhes da etapa.\n
+* **Linha do Tempo de Etapas:** Acompanhe o progresso pelas etapas. Clique nos ícones para ver detalhes da etapa.\n
 * **Informações Gerais:** Cliente, funcionário responsável e descrição.\n
 * **Detalhes da Etapa:** Descrição da etapa selecionada e botão para documentos, se aplicável.\n
 * **Ações (Botão):**\n
@@ -151,35 +162,32 @@ Clique em "Salvar Alterações no Projeto" para aplicar as mudanças.`,
         title: "Ajuda - Nova Pessoa (Pré-cadastro)",
         content: `Inicie o cadastro de um novo usuário no sistema.\n\n
 * **Tipo de Pessoa:** Selecione se será um Cliente (PF ou PJ), Funcionário ou Administrador.\n
-* **Dados Pessoais:** Preencha as informações solicitadas (Nome, CPF/CNPJ, Telefone, etc.) conforme o tipo selecionado.\n\n
+* **Dados Pessoais:** Preencha as informações solicitadas (Nome, CPF/CNPJ, Telefone) conforme o tipo selecionado.\n\n
 Ao clicar em "Criar e Gerar Link", um link único será gerado. Você deve copiar este link e enviá-lo para a pessoa, que o usará para definir seu próprio e-mail e senha, finalizando o cadastro.`,
     },
     "/admin/pessoas/editar": {
         title: "Ajuda - Editar Pessoa",
         content: `Modifique os dados cadastrais de uma pessoa existente.\n\n
 * **Tipo de Pessoa:** Não pode ser alterado.\n
-* **Dados Pessoais:** Edite nome, documento (CPF/CNPJ), telefone, etc.\n
-* **Email:** Você também pode corrigir ou alterar o email de acesso da conta do usuário aqui.\n\n
+* **Dados Pessoais:** Edite nome, documento (CPF/CNPJ), telefone.\n\n
 Clique em "Salvar Alterações" para confirmar.`,
     },
     // Rota de Perfil (Comum a todos)
     "/admin/perfil": {
-        title: "Ajuda - Meu Perfil (Admin)",
+        title: "Ajuda - Meu Perfil",
         content: `Gerencie seus dados pessoais e de acesso.\n\n
-* **Informações Pessoais:** Visualize e edite diretamente seus dados cadastrais (nome, telefone, etc.). Clique em "Salvar Dados Pessoais" para aplicar as mudanças.\n
-* **Informações da Conta:** Altere seu email de login ou defina uma nova senha. Por segurança, ao salvar alterações aqui, você será desconectado.`,
-    },
-    "/employee/perfil": {
-        title: "Ajuda - Meu Perfil (Funcionário)",
-        content: `Gerencie seus dados pessoais e de acesso.\n\n
-* **Informações Pessoais:** Visualize seus dados cadastrais (nome, telefone). Para alterar, modifique os campos desejados e clique em "Solicitar Alterações". Sua solicitação será enviada para aprovação de um administrador.\n
-* **Informações da Conta:** Altere seu email de login ou defina uma nova senha. Por segurança, ao salvar alterações aqui, você será desconectado.`,
-    },
-    "/client/perfil": {
-        title: "Ajuda - Meu Perfil (Cliente)",
-        content: `Gerencie seus dados pessoais e de acesso.\n\n
-* **Informações Pessoais:** Visualize seus dados cadastrais (nome/razão social, documento, telefone). Para alterar, modifique os campos desejados e clique em "Solicitar Alterações". Sua solicitação será enviada para aprovação de um administrador.\n
+* **Informações Pessoais:** Visualize e edite diretamente seus dados cadastrais (nome, telefone). Clique em "Salvar Dados Pessoais" para aplicar as mudanças.\n
 * **Informações da Conta:** Altere seu email de login ou defina uma nova senha. Por segurança, ao salvar alterações aqui, você será desconectado.`,
     },
     // Rota de Documentos (Comum a Funcionário e Cliente, talvez Admin?)
+    "/documentos": {
+        title: "Ajuda - Gerenciador de Documentos",
+        content: `Visualize e adicione documentos ou links relevantes para esta etapa do projeto.\n\n
+* **Documentos da Etapa:** Lista os arquivos e links já adicionados, mostrando quem enviou e quando. Use os ícones para visualizar (abrir link/arquivo) ou excluir (ícone de lixeira).\n
+* **Adicionar Novo Documento:**\n
+    * Escolha entre 'Link' ou 'Arquivo'.\n
+    * Dê um nome (opcional para links, obrigatório para arquivos se diferente do nome original).\n
+    * Insira a URL (para links) ou selecione o arquivo do seu computador.\n
+    * Clique em "Adicionar".`,
+    },
 };
